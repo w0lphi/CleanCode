@@ -5,6 +5,7 @@ import org.aau.writer.MarkdownWriter;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.OffsetDateTime;
 import java.util.Scanner;
 
 public class WebCrawlerService {
@@ -30,7 +31,7 @@ public class WebCrawlerService {
 
             MarkdownWriter writer = new MarkdownWriter("build/report.md");
             try {
-                Path filepath = writer.writeResultsToFile(crawler.getCrawledLinks());
+                Path filepath = writer.writeResultsToFile(crawler.getCrawledLinks(), OffsetDateTime.now());
                 System.out.printf("Web Crawler Results available at: %s\n", filepath.toAbsolutePath());
             } catch (IOException e) {
                 System.err.printf("Error writing results to file: error=%s\n", e.getMessage());

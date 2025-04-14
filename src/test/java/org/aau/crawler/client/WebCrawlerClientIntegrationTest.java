@@ -1,6 +1,7 @@
 package org.aau.crawler.client;
 
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,10 +34,15 @@ public class WebCrawlerClientIntegrationTest {
     String mockServerUrl;
 
     @BeforeEach
-    public void setup(MockServerClient client) {
+    void setup(MockServerClient client) {
         this.client = client;
         this.webCrawlerClient = new WebCrawlerClient();
         this.mockServerUrl = "http://localhost:%d".formatted(client.getPort());
+    }
+
+    @AfterEach
+    void teardown() {
+        this.webCrawlerClient.close();
     }
 
     @ParameterizedTest
@@ -46,7 +52,7 @@ public class WebCrawlerClientIntegrationTest {
             422, 423, 424, 425, 426, 428, 429, 431, 451,
             500, 501, 502, 503, 504, 505, 506, 507, 508, 510, 511
     })
-    void isPageAvailableShouldReturnFalseForErrorCode(int statusCode){
+    void isPageAvailableShouldReturnFalseForErrorCode(int statusCode) {
         String path = "/error-code";
         client.when(
                 request()
@@ -64,7 +70,7 @@ public class WebCrawlerClientIntegrationTest {
             200, 201, 202, 203, 204, 205, 206, 207, 208, 226,
             300, 301, 302, 303, 304, 305, 307, 308
     })
-    void isPageAvailableShouldReturnTrueForSuccessCode(int statusCode){
+    void isPageAvailableShouldReturnTrueForSuccessCode(int statusCode) {
         String path = "/success-code";
         client.when(
                 request()
@@ -90,7 +96,7 @@ public class WebCrawlerClientIntegrationTest {
     }
 
     @Test
-    void getPageContentShouldReturnPageContent(){
+    void getPageContentShouldReturnPageContent() {
         String path = "/test-html";
         String url = "%s%s".formatted(mockServerUrl, path);
         String expectedHtml = "<html><head><title>Test Title</title></head><body>Test</body></html>";
@@ -110,7 +116,7 @@ public class WebCrawlerClientIntegrationTest {
     }
 
     @Test
-    void closeShouldCloseWebDriverAndHTTPClient(){
+    void closeShouldCloseWebDriverAndHTTPClient() {
         HttpClient mockHttpClient = mock(HttpClient.class);
         WebDriver mockWebDriver = mock(WebDriver.class);
         WebCrawlerClient client = new WebCrawlerClient(mockWebDriver, mockHttpClient);
@@ -118,8 +124,6 @@ public class WebCrawlerClientIntegrationTest {
         verify(mockHttpClient).close();
         verify(mockWebDriver).close();
     }
-
-
 
 
 }

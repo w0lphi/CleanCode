@@ -15,18 +15,19 @@ import java.util.Set;
 
 public class MarkdownWriter {
 
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final String pathString;
 
     public MarkdownWriter(String path) {
         this.pathString = path;
     }
 
-    public void writeResultsToFile(Set<Link> links) throws IOException {
+    public Path writeResultsToFile(Set<Link> links, OffsetDateTime timestamp) throws IOException {
         Path path = Paths.get(pathString);
         List<String> lines = new ArrayList<>();
         lines.add("# Crawl Results\n");
-        lines.add("Results from %s".formatted(OffsetDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)));
+        lines.add("Results from %s\n".formatted(timestamp.format(DATE_TIME_FORMATTER)));
         lines.addAll(links.stream().map(Link::toString).toList());
-        Files.write(path, lines, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        return Files.write(path, lines, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     }
 }
