@@ -16,11 +16,25 @@ import java.time.Duration;
 
 public class WebCrawlerClient implements AutoCloseable {
 
-    private final WebDriver webDriver;
+    final WebDriver webDriver;
+    final HttpClient httpClient;
     private static final String READY_STATE_COMPLETE = "complete";
     private static final Duration MAX_PAGE_LOAD_TIME = Duration.ofSeconds(10);
 
+    public WebCrawlerClient(WebDriver webDriver, HttpClient httpClient) {
+        this.webDriver = webDriver;
+        this.httpClient = httpClient;
+    }
+
     public WebCrawlerClient() {
+        this(createDefaultWebDriver(), createDefaultHttpClient());
+    }
+
+    public WebCrawlerClient(HttpClient httpClient) {
+        this(createDefaultWebDriver(), httpClient);
+    }
+
+    private static WebDriver createDefaultWebDriver() {
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--headless=new");
         options.addArguments("--disable-gpu");
@@ -28,21 +42,24 @@ public class WebCrawlerClient implements AutoCloseable {
         options.addArguments("--disable-extensions");
         options.addArguments("--disable-popup-blocking");
         options.addArguments("--disable-notifications");
-        this.webDriver = new ChromeDriver(options);
-
+        WebDriver webDriver = new ChromeDriver(options);
         webDriver.manage().timeouts().pageLoadTimeout(MAX_PAGE_LOAD_TIME);
-
         WebDriverWait waitForDocumentReady = new WebDriverWait(webDriver, MAX_PAGE_LOAD_TIME);
         waitForDocumentReady.until((driver) -> {
             String readyState = (String) ((JavascriptExecutor) driver).executeScript("return document.readyState");
             return READY_STATE_COMPLETE.equals(readyState);
         });
+        return webDriver;
+    }
+
+    private static HttpClient createDefaultHttpClient() {
+        return HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .build();
     }
 
     public boolean isPageAvailable(String url) {
-        try (HttpClient httpClient = HttpClient.newBuilder()
-                .followRedirects(HttpClient.Redirect.NORMAL)
-                .build()){
+        try{
             var request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .method("HEAD", HttpRequest.BodyPublishers.noBody())
@@ -65,5 +82,6 @@ public class WebCrawlerClient implements AutoCloseable {
     @Override
     public void close() {
         webDriver.close();
+        httpClient.close();
     }
 }
