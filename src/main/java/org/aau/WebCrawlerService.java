@@ -25,16 +25,11 @@ public class WebCrawlerService {
                 }
             }
 
-            WebCrawler crawler = new WebCrawler(startUrl, maximumDepth);
-            crawler.start();
-            System.out.println("Web Crawler finished!");
-
-            MarkdownWriter writer = new MarkdownWriter("build/report.md");
             try {
-                Path filepath = writer.writeResultsToFile(crawler.getCrawledLinks(), OffsetDateTime.now());
-                System.out.printf("Web Crawler Results available at: %s\n", filepath.toAbsolutePath());
-            } catch (IOException e) {
-                System.err.printf("Error writing results to file: error=%s\n", e.getMessage());
+                Path result = new WebCrawlerRunner().run(startUrl, maximumDepth, "build");
+                System.out.printf("Crawl finished. Report: %s\n", result.toAbsolutePath());
+            } catch (Exception e) {
+                System.err.printf("Crawl failed: %s\n", e.getMessage());
             }
 
         }
