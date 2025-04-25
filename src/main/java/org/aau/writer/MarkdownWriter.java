@@ -3,31 +3,29 @@ package org.aau.writer;
 import org.aau.crawler.result.Link;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class MarkdownWriter {
 
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private final String pathString;
+    private final String outputDir;
+    private final LinkFormatter formatter;
 
-    public MarkdownWriter(String path) {
-        this.pathString = path;
+    public MarkdownWriter(String outputDir, LinkFormatter formatter) {
+        this.outputDir = outputDir;
+        this.formatter = formatter;
     }
 
     public Path writeResultsToFile(Set<Link> links, OffsetDateTime timestamp) throws IOException {
-        Path path = Paths.get(pathString);
+        String filename = "report-" + timestamp.format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")) + ".md";
+        Path path = Paths.get(outputDir, filename);
         List<String> lines = new ArrayList<>();
         lines.add("# Crawl Results\n");
-        lines.add("Results from %s\n".formatted(timestamp.format(DATE_TIME_FORMATTER)));
-        lines.addAll(links.stream().map(Link::toString).toList());
+        lines.add("Timestamp: " + timestamp + "\n");
+        links.stream().map(formatter::format).forEach(lines::add);
+        Files.createDirectories(path.getParent());
         return Files.write(path, lines, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     }
 }
