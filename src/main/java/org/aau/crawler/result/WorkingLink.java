@@ -19,13 +19,6 @@ public class WorkingLink extends Link {
         return Optional.ofNullable(subLinks).orElse(new HashSet<>());
     }
 
-    @Override
-    public String toString() {
-        return """
-                URL: %s <br>
-                Depth: %s <br>
-                Headings: <br>
-                %s <br>
-                """.formatted(url, depth, String.join("<br>\n", headings));
-    }
+    public Set<String> getHeadings() {return Optional.ofNullable(headings).orElse(new HashSet<>());}
+
 }

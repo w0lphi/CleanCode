@@ -6,11 +6,4 @@ public class BrokenLink extends Link {
         super(url, depth);
     }
 
-    @Override
-    public String toString() {
-        return """
-                URL: %s (broken link) <br>
-                Depth: %s <br>
-                """.formatted(url, depth);
-    }
 }
