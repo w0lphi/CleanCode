@@ -1,11 +1,6 @@
 package org.aau;
 
-import org.aau.crawler.WebCrawler;
-import org.aau.writer.MarkdownWriter;
-
-import java.io.IOException;
 import java.nio.file.Path;
-import java.time.OffsetDateTime;
 import java.util.Scanner;
 
 public class WebCrawlerService {
