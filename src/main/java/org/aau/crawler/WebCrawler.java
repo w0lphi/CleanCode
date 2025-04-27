@@ -1,19 +1,18 @@
 package org.aau.crawler;
 
-import org.aau.WebCrawlerRunner;
 import org.aau.crawler.client.WebCrawlerClient;
 import org.aau.crawler.result.BrokenLink;
 import org.aau.crawler.result.Link;
 import org.aau.crawler.result.WorkingLink;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class WebCrawler {
 
     private final String startUrl;
     private final int maximumDepth;
-    private final Set<Link> crawledLinks = new HashSet<>();
+    private final Set<Link> crawledLinks = new LinkedHashSet<>();
     private final WebCrawlerClient webCrawlerClient;
     private final PageAnalyzer analyzer;
 
@@ -31,20 +30,19 @@ public class WebCrawler {
     }
 
     void crawlLinkRecursively(String url, int depth) {
-        if (depth > maximumDepth || isAlreadyCrawledUrl(url)) return;{
+        if (depth > maximumDepth || isAlreadyCrawledUrl(url)) return;
 
-            if (webCrawlerClient.isPageAvailable(url)) {
-                try {
-                    String html = webCrawlerClient.getPageContent(url);
-                    WorkingLink link = analyzer.analyze(url, depth, html);
-                    crawledLinks.add(link);
-                    link.getSubLinks().forEach(sub -> crawlLinkRecursively(sub, depth + 1));
-                } catch (Exception e) {
-                    crawledLinks.add(new BrokenLink(url, depth));
-                }
-            } else {
+        if (webCrawlerClient.isPageAvailable(url)) {
+            try {
+                String html = webCrawlerClient.getPageContent(url);
+                WorkingLink link = analyzer.analyze(url, depth, html);
+                crawledLinks.add(link);
+                link.getSubLinks().forEach(sub -> crawlLinkRecursively(sub, depth + 1));
+            } catch (Exception e) {
                 crawledLinks.add(new BrokenLink(url, depth));
             }
+        } else {
+            crawledLinks.add(new BrokenLink(url, depth));
         }
     }
 

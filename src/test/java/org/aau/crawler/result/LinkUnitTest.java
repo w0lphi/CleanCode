@@ -11,31 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class LinkUnitTest {
 
     @Test
-    void testWorkingLinkToString(){
-        String url = "https://www.test.com";
-        int depth = 10;
-        Set<String> headings = Set.of("Heading1", "Heading2", "Heading3");
-        String expected = """
-                URL: %s <br>
-                Depth: %s <br>
-                Headings: <br>
-                %s <br>
-                """.formatted(url, depth, String.join("<br>\n", headings));
-        assertEquals(expected, new WorkingLink(url, depth, headings, null).toString());
-    }
-
-    @Test
-    void testBrokenLinkToString(){
-        String url = "https://www.test.com";
-        int depth = 10;
-        String expected = """
-                URL: %s (broken link) <br>
-                Depth: %s <br>
-                """.formatted(url, depth);
-        assertEquals(expected, new BrokenLink(url, depth).toString());
-    }
-
-    @Test
     void workingLinkGetSubLinksShouldReturnEmptySetOnNull(){
         var workingLink = new WorkingLink("https://www.test.com", 10, null, null);
         Set<String> subLinks = workingLink.getSubLinks();

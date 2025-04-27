@@ -23,7 +23,7 @@ public class MarkdownWriter {
         Path path = Paths.get(outputDir, filename);
         List<String> lines = new ArrayList<>();
         lines.add("# Crawl Results\n");
-        lines.add("Timestamp: " + timestamp + "\n");
+        lines.add("Timestamp: " + timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "\n");
         links.stream().map(formatter::format).forEach(lines::add);
         Files.createDirectories(path.getParent());
         return Files.write(path, lines, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
