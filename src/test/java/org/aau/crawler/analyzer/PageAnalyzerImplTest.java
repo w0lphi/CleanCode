@@ -3,9 +3,7 @@ package org.aau.crawler.analyzer;
 import org.aau.crawler.parser.HtmlParser;
 import org.aau.crawler.result.WorkingLink;
 import org.junit.jupiter.api.Test;
-
 import java.util.Set;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
