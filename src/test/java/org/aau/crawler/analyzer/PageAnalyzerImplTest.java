@@ -7,7 +7,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class PageAnalyzerImplTest {
+public class PageAnalyzerImplTest {
 
     @Test
     void analyze_shouldReturnWorkingLinkWithExtractedData() {
