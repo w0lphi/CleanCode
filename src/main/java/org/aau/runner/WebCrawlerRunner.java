@@ -5,12 +5,16 @@ import org.aau.crawler.WebCrawlerImpl;
 import org.aau.crawler.analyzer.PageAnalyzerImpl;
 import org.aau.crawler.client.WebCrawlerClientImpl;
 import org.aau.crawler.parser.HtmlParserImpl;
+import org.aau.crawler.result.Link;
 import org.aau.writer.MarkdownFormatter;
 import org.aau.writer.MarkdownWriter;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
+import java.util.Comparator;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class WebCrawlerRunner {
 
@@ -25,14 +29,14 @@ public class WebCrawlerRunner {
     public Path executeCrawl() {
         try {
             crawler.start();
-            return writeCrawlerResultsToFile(crawler, OffsetDateTime.now());
+            return writeSortedCrawlerResultsToFile(crawler, OffsetDateTime.now());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    protected Path writeCrawlerResultsToFile(WebCrawler crawler, OffsetDateTime timestamp) throws IOException {
-        return writer.writeResultsToFile(crawler.getCrawledLinks(), timestamp);
+    protected Path writeSortedCrawlerResultsToFile(WebCrawler crawler, OffsetDateTime timestamp) throws IOException {
+        return writer.writeResultsToFile(new TreeSet<>(crawler.getCrawledLinks()), timestamp);
     }
 
     protected WebCrawler createCrawler(String startUrl, int maximumDepth) {

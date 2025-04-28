@@ -2,6 +2,7 @@ package org.aau.runner;
 
 import org.aau.crawler.WebCrawler;
 import org.aau.writer.MarkdownWriter;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,14 +13,18 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.OffsetDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertLinesMatch;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -55,9 +60,9 @@ public class WebCrawlerRunnerIntegrationTest {
 
     @Test
     void testExecuteCrawl() throws IOException {
-        String workingPath = "/working-path";
-        String brokenPath = "/broken-path";
-        String h1Page1 = "TestHeading1";
+        String workingPath = "/a-working-path/" + UUID.randomUUID();
+        String brokenPath = "/broken-path/" + UUID.randomUUID();
+        String h1Page1 = "TestHeading1-" + UUID.randomUUID();
         String htmlPage1 = """
                 <html>
                     <head>
@@ -78,9 +83,9 @@ public class WebCrawlerRunnerIntegrationTest {
                 mockServerUrl + brokenPath);
 
 
-        String h1Page2 = "TestHeading2";
-        String h2Page2 = "TestHeading3";
-        String h3Page2 = "TestHeading4";
+        String h1Page2 = "TestHeading2-" + UUID.randomUUID();
+        String h2Page2 = "TestHeading3-" + UUID.randomUUID();
+        String h3Page2 = "TestHeading4-" + UUID.randomUUID();
         String htmlPage2 = """
                 <html>
                     <head>
@@ -123,7 +128,7 @@ public class WebCrawlerRunnerIntegrationTest {
         assertNotNull(filepath);
         verify(webCrawler).start();
         verify(writer).writeResultsToFile(anySet(), any(OffsetDateTime.class));
-        verify(webCrawler).getCrawledLinks();
+        verify(webCrawler, times(4)).getCrawledLinks();
 
         List<String> expectedLines = List.of(
                 "# Crawl Results",
@@ -149,5 +154,22 @@ public class WebCrawlerRunnerIntegrationTest {
 
         List<String> actualLines = Files.readAllLines(filepath, Charset.defaultCharset());
         assertLinesMatch(expectedLines, actualLines);
+    }
+
+    @AfterEach
+    void teardown() throws IOException {
+        Path path = Paths.get(TEST_OUTPUT_DIR);
+        if (Files.exists(path)) {
+            try (var paths = Files.walk(path)) {
+                paths.sorted(Comparator.reverseOrder())
+                        .forEach(p -> {
+                            try {
+                                Files.delete(p);
+                            } catch (IOException e) {
+                                throw new RuntimeException("Error when deleting file: path = %s".formatted(p), e);
+                            }
+                        });
+            }
+        }
     }
 }

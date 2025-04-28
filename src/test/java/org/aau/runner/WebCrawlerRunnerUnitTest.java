@@ -49,7 +49,7 @@ public class WebCrawlerRunnerUnitTest {
     }
 
     @Test
-    void testWriteCrawlerResultsToFile() throws IOException {
+    void testWriteSortedCrawlerResultsToFile() throws IOException {
         Path expectedPath = Path.of(OUTPUT_DIR).toAbsolutePath();
         var webCrawlerRunner = new WebCrawlerRunner(startUrl, 1, OUTPUT_DIR) {
             @Override
@@ -64,6 +64,9 @@ public class WebCrawlerRunnerUnitTest {
                 
                 Timestamp: %s
                 
+                ## https://www.broken.com (broken)
+                Depth: 5
+                
                 ## https://www.working.com
                 Depth: 1
                 ### Headings
@@ -71,12 +74,9 @@ public class WebCrawlerRunnerUnitTest {
                 Heading2
                 Heading3
                 
-                ## https://www.broken.com (broken)
-                Depth: 5
-                
                 """.formatted(timestamp.format(DATE_TIME_FORMATTER));
 
-        Path filePath = webCrawlerRunner.writeCrawlerResultsToFile(crawlerMock, timestamp);
+        Path filePath = webCrawlerRunner.writeSortedCrawlerResultsToFile(crawlerMock, timestamp);
 
         assertTrue(filePath.toAbsolutePath().toString().startsWith(expectedPath + "/report-"));
         assertTrue(Files.exists(filePath));
