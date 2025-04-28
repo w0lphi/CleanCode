@@ -55,7 +55,7 @@ public class WebCrawlerImpl implements WebCrawler {
         }
     }
 
-    private boolean isAlreadyCrawledUrl(String url) {
-        return crawledLinks.stream().anyMatch(crawlResult -> crawlResult.getUrl().equals(url));
+    protected boolean isAlreadyCrawledUrl(String url) {
+        return getCrawledLinks().stream().anyMatch(crawlResult -> crawlResult.getUrl().equals(url));
     }
 }

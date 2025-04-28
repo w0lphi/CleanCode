@@ -19,6 +19,8 @@ public class WorkingLink extends Link {
         return Optional.ofNullable(subLinks).orElse(new HashSet<>());
     }
 
-    public Set<String> getHeadings() {return Optional.ofNullable(headings).orElse(new HashSet<>());}
+    public Set<String> getHeadings() {
+        return Optional.ofNullable(headings).orElse(new HashSet<>());
+    }
 
 }
