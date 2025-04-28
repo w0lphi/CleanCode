@@ -66,11 +66,16 @@ public class WebCrawlerRunnerIntegrationTest {
                     <body>
                         <h1>%s</h1>
                         <a href="%s">working link</a>
+                        <a href="%s">duplicate link</a>
                         <a href="%s">broken link</a>
                     </body>
                 </html>
                 
-                """.formatted(h1Page1, mockServerUrl + workingPath, mockServerUrl + brokenPath);
+                """.formatted(
+                h1Page1,
+                mockServerUrl + workingPath,
+                mockServerUrl + workingPath,
+                mockServerUrl + brokenPath);
 
 
         String h1Page2 = "TestHeading2";
@@ -128,14 +133,14 @@ public class WebCrawlerRunnerIntegrationTest {
                 "## %s".formatted(mockServerUrl),
                 "Depth: 0",
                 "### Headings",
-                "# TestHeading1",
+                "# %s".formatted(h1Page1),
                 "",
                 "## %s".formatted(mockServerUrl + workingPath),
                 "Depth: 1",
                 "### Headings",
-                "# TestHeading2",
-                "## TestHeading3",
-                "### TestHeading4",
+                "# %s".formatted(h1Page2),
+                "## %s".formatted(h2Page2),
+                "### %s".formatted(h3Page2),
                 "",
                 "## %s (broken)".formatted(mockServerUrl + brokenPath),
                 "Depth: 1",
