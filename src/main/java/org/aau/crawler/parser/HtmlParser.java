@@ -6,5 +6,6 @@ import java.util.Set;
 
 public interface HtmlParser {
     Set<String> extractHeadings(Document htmlDocument);
+
     Set<String> extractLinks(Document htmlDocument);
 }

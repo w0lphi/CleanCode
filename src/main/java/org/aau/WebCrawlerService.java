@@ -17,13 +17,17 @@ public class WebCrawlerService {
                 try {
                     System.out.println("Please enter maximum depth to crawl: ");
                     maximumDepth = Integer.parseInt(scanner.nextLine());
+                    if (maximumDepth < 0) {
+                        throw new NumberFormatException("Maximum depth cannot be negative");
+                    }
                 } catch (NumberFormatException e) {
-                    System.err.println("Input is not a number, please try again!");
+                    System.err.println("Input is not a valid number, please try again!");
                 }
             }
 
             try {
                 var runner = new WebCrawlerRunner(startUrl, maximumDepth, "build");
+                System.out.println("Starting web crawler ...");
                 Path result = runner.executeCrawl();
                 System.out.printf("Crawl finished. Report available at: %s\n", result.toAbsolutePath());
             } catch (Exception e) {

@@ -5,15 +5,11 @@ import org.aau.crawler.WebCrawlerImpl;
 import org.aau.crawler.analyzer.PageAnalyzerImpl;
 import org.aau.crawler.client.WebCrawlerClientImpl;
 import org.aau.crawler.parser.HtmlParserImpl;
-import org.aau.crawler.result.Link;
-import org.aau.writer.MarkdownFormatter;
 import org.aau.writer.MarkdownWriter;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
-import java.util.Comparator;
-import java.util.Set;
 import java.util.TreeSet;
 
 public class WebCrawlerRunner {
@@ -46,6 +42,6 @@ public class WebCrawlerRunner {
     }
 
     protected MarkdownWriter createMarkdownWriter(String outputDir) {
-        return new MarkdownWriter(outputDir, new MarkdownFormatter());
+        return new MarkdownWriter(outputDir);
     }
 }

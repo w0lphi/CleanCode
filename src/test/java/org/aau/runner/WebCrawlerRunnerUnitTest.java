@@ -70,8 +70,8 @@ public class WebCrawlerRunnerUnitTest {
                 ## https://www.working.com
                 Depth: 1
                 ### Headings
-                Heading1
-                Heading2
+                Heading1\s\s
+                Heading2\s\s
                 Heading3
                 
                 """.formatted(timestamp.format(DATE_TIME_FORMATTER));

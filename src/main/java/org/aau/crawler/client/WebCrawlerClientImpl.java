@@ -60,7 +60,7 @@ public class WebCrawlerClientImpl implements WebCrawlerClient {
 
     @Override
     public boolean isPageAvailable(String url) {
-        try{
+        try {
             var request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .method("HEAD", HttpRequest.BodyPublishers.noBody())

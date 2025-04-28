@@ -2,7 +2,6 @@ package org.aau.crawler;
 
 import org.aau.crawler.analyzer.PageAnalyzer;
 import org.aau.crawler.client.WebCrawlerClient;
-import org.aau.crawler.client.WebCrawlerClientImpl;
 import org.aau.crawler.result.BrokenLink;
 import org.aau.crawler.result.Link;
 import org.aau.crawler.result.WorkingLink;
@@ -67,7 +66,7 @@ public class WebCrawlerImplUnitTest {
     }
 
     @Test
-    void crawlLinkRecursivelyShouldAddBrokenLinkForUnavailablePage(){
+    void crawlLinkRecursivelyShouldAddBrokenLinkForUnavailablePage() {
         when(webCrawlerClientMock.isPageAvailable(anyString())).thenReturn(false);
 
         webCrawler.crawlLinkRecursively(START_URL, 0);
@@ -79,7 +78,7 @@ public class WebCrawlerImplUnitTest {
 
 
     @Test
-    void crawlLinkRecursivelyShouldAddWorkingLinkForWorkingPages(){
+    void crawlLinkRecursivelyShouldAddWorkingLinkForWorkingPages() {
         Set<String> headings = new LinkedHashSet<>(List.of("Heading1", "Heading2", "Heading3"));
         WorkingLink expectedWorkingLink = new WorkingLink(START_URL, 0, headings, Set.of());
         String html = "<html></html>";
@@ -96,7 +95,7 @@ public class WebCrawlerImplUnitTest {
     }
 
     @Test
-    void crawlLinkRecursivelyShouldAddLinkForAllSubPages(){
+    void crawlLinkRecursivelyShouldAddLinkForAllSubPages() {
 
         BrokenLink brokenSublink = new BrokenLink(START_URL + "/broken", DEPTH);
         WorkingLink workingSublink = new WorkingLink(START_URL + "/working", DEPTH, Set.of(), Set.of());
@@ -118,16 +117,16 @@ public class WebCrawlerImplUnitTest {
         List<Link> crawledLinks = webCrawler.getCrawledLinks().stream().toList();
         assertEquals(parentLink, crawledLinks.getFirst());
         assertEquals(parentLink.getDepth(), crawledLinks.getFirst().getDepth());
-        assertEquals(parentLink.getSubLinks(), ((WorkingLink)crawledLinks.getFirst()).getSubLinks());
-        assertEquals(parentLink.getHeadings(), ((WorkingLink)crawledLinks.getFirst()).getHeadings());
+        assertEquals(parentLink.getSubLinks(), ((WorkingLink) crawledLinks.getFirst()).getSubLinks());
+        assertEquals(parentLink.getHeadings(), ((WorkingLink) crawledLinks.getFirst()).getHeadings());
 
         assertEquals(brokenSublink, crawledLinks.get(1));
         assertEquals(brokenSublink.getDepth(), crawledLinks.get(1).getDepth());
 
         assertEquals(workingSublink, crawledLinks.getLast());
         assertEquals(workingSublink.getDepth(), crawledLinks.getLast().getDepth());
-        assertEquals(workingSublink.getSubLinks(), ((WorkingLink)crawledLinks.getLast()).getSubLinks());
-        assertEquals(workingSublink.getHeadings(), ((WorkingLink)crawledLinks.getLast()).getHeadings());
+        assertEquals(workingSublink.getSubLinks(), ((WorkingLink) crawledLinks.getLast()).getSubLinks());
+        assertEquals(workingSublink.getHeadings(), ((WorkingLink) crawledLinks.getLast()).getHeadings());
 
         verify(webCrawler, times(3)).crawlLinkRecursively(anyString(), anyInt());
         verify(webCrawlerClientMock, times(3)).isPageAvailable(anyString());
@@ -135,12 +134,9 @@ public class WebCrawlerImplUnitTest {
     }
 
     @Test
-    void isAlreadyCrawledUrlShouldReturnTrueForAlreadyCrawledUrl(){
+    void isAlreadyCrawledUrlShouldReturnTrueForAlreadyCrawledUrl() {
         Link link = new WorkingLink(START_URL, DEPTH, Set.of(), Set.of());
         when(webCrawler.getCrawledLinks()).thenReturn(Set.of(link));
         assertTrue(webCrawler.isAlreadyCrawledUrl(link.getUrl()));
     }
-
-
-
 }

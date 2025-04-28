@@ -6,5 +6,6 @@ import java.util.Set;
 
 public interface WebCrawler {
     void start();
+
     Set<Link> getCrawledLinks();
 }

@@ -6,4 +6,11 @@ public class BrokenLink extends Link {
         super(url, depth);
     }
 
+    @Override
+    public String toMarkdownString() {
+        return """
+                ## %s (broken)
+                Depth: %s
+                """.formatted(this.getUrl(), this.getDepth());
+    }
 }

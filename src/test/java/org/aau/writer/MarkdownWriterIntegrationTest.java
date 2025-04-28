@@ -28,7 +28,7 @@ public class MarkdownWriterIntegrationTest {
     @Test
     void testWriteResultsToFile() throws IOException {
         Path expectedPath = Path.of(TEST_FILE_PATH).toAbsolutePath();
-        MarkdownWriter writer = new MarkdownWriter(TEST_FILE_PATH, new MarkdownFormatter());
+        MarkdownWriter writer = new MarkdownWriter(TEST_FILE_PATH);
         Set<String> headings = new LinkedHashSet<>(List.of("Heading1", "Heading2", "Heading3"));
         Link workingLink = new WorkingLink("https://www.working.com", 1, headings, Set.of("Link3"));
         Link brokenLink = new BrokenLink("https://www.broken.com", 5);
@@ -42,8 +42,8 @@ public class MarkdownWriterIntegrationTest {
                 ## https://www.working.com
                 Depth: 1
                 ### Headings
-                Heading1
-                Heading2
+                Heading1\s\s
+                Heading2\s\s
                 Heading3
                 
                 ## https://www.broken.com (broken)

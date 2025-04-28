@@ -40,4 +40,6 @@ public abstract class Link implements Comparable<Link> {
                 .thenComparingInt(Link::getDepth)
                 .compare(this, o);
     }
+
+    public abstract String toMarkdownString();
 }

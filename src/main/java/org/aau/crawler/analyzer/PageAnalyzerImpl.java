@@ -1,7 +1,6 @@
 package org.aau.crawler.analyzer;
 
 import org.aau.crawler.parser.HtmlParser;
-import org.aau.crawler.parser.HtmlParserImpl;
 import org.aau.crawler.result.WorkingLink;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;

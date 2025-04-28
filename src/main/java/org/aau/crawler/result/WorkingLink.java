@@ -23,4 +23,13 @@ public class WorkingLink extends Link {
         return Optional.ofNullable(headings).orElse(new HashSet<>());
     }
 
+    @Override
+    public String toMarkdownString() {
+        return """
+                ## %s
+                Depth: %s
+                ### Headings
+                %s
+                """.formatted(this.getUrl(), this.getDepth(), String.join("\s\s\n", this.getHeadings()));
+    }
 }

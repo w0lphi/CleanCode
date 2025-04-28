@@ -17,8 +17,8 @@ public class HtmlParserImpl implements HtmlParser {
         for (Element heading : headings) {
             String tagName = heading.tagName();
             int level = Integer.parseInt(tagName.substring(1));
-            String hashtags = "#".repeat(level);
-            headingSet.add(hashtags + " " + heading.text());
+            String headingLevel = "+".repeat(level);
+            headingSet.add(headingLevel + " " + heading.text());
         }
         return headingSet;
     }
