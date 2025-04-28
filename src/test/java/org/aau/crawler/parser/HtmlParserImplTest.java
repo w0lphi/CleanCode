@@ -17,9 +17,9 @@ public class HtmlParserImplTest {
 
         Set<String> headings = parser.extractHeadings(doc);
 
-        assertTrue(headings.contains("# Main Title"));
-        assertTrue(headings.contains("## Sub Title"));
-        assertTrue(headings.contains("##### Deep Title"));
+        assertTrue(headings.contains("+ Main Title"));
+        assertTrue(headings.contains("++ Sub Title"));
+        assertTrue(headings.contains("+++++ Deep Title"));
         assertEquals(3, headings.size());
     }
 
