@@ -1,5 +1,7 @@
 package org.aau;
 
+import org.aau.runner.WebCrawlerRunner;
+
 import java.nio.file.Path;
 import java.util.Scanner;
 

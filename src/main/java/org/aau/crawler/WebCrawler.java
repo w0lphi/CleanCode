@@ -1,5 +1,7 @@
 package org.aau.crawler;
 
+import org.aau.crawler.analyzer.PageAnalyzer;
+import org.aau.crawler.analyzer.PageAnalyzerImpl;
 import org.aau.crawler.client.WebCrawlerClient;
 import org.aau.crawler.result.BrokenLink;
 import org.aau.crawler.result.Link;
@@ -26,6 +28,8 @@ public class WebCrawler {
     public void start() {
         try (webCrawlerClient) {
             crawlLinkRecursively(startUrl, 0);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 

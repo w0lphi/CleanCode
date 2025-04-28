@@ -27,16 +27,16 @@ import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
 @ExtendWith(MockServerExtension.class)
-public class WebCrawlerClientIntegrationTest {
+public class WebCrawlerClientImplIntegrationTest {
 
     MockServerClient client;
-    WebCrawlerClient webCrawlerClient;
+    WebCrawlerClientImpl webCrawlerClient;
     String mockServerUrl;
 
     @BeforeEach
     void setup(MockServerClient client) {
         this.client = client;
-        this.webCrawlerClient = new WebCrawlerClient();
+        this.webCrawlerClient = new WebCrawlerClientImpl();
         this.mockServerUrl = "http://localhost:%d".formatted(client.getPort());
     }
 
@@ -87,7 +87,7 @@ public class WebCrawlerClientIntegrationTest {
     void isPageAvailableShouldReturnFalseOnException() throws IOException, InterruptedException {
         HttpClient mockHttpClient = mock(HttpClient.class);
         WebDriver mockWebDriver = mock(WebDriver.class);
-        WebCrawlerClient client = new WebCrawlerClient(mockWebDriver, mockHttpClient);
+        WebCrawlerClientImpl client = new WebCrawlerClientImpl(mockWebDriver, mockHttpClient);
         when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
                 .thenThrow(new IOException("Simulated network error"));
         boolean result = client.isPageAvailable("http://example.com");
@@ -110,7 +110,7 @@ public class WebCrawlerClientIntegrationTest {
                         .withBody(expectedHtml)
         );
         HttpClient mockHttpClient = mock(HttpClient.class);
-        WebCrawlerClient client = new WebCrawlerClient(mockHttpClient);
+        WebCrawlerClientImpl client = new WebCrawlerClientImpl(mockHttpClient);
         String result = client.getPageContent(url);
         assertEquals(expectedHtml, result);
     }
@@ -119,7 +119,7 @@ public class WebCrawlerClientIntegrationTest {
     void closeShouldCloseWebDriverAndHTTPClient() {
         HttpClient mockHttpClient = mock(HttpClient.class);
         WebDriver mockWebDriver = mock(WebDriver.class);
-        WebCrawlerClient client = new WebCrawlerClient(mockWebDriver, mockHttpClient);
+        WebCrawlerClientImpl client = new WebCrawlerClientImpl(mockWebDriver, mockHttpClient);
         client.close();
         verify(mockHttpClient).close();
         verify(mockWebDriver).close();

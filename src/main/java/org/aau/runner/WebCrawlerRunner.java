@@ -1,9 +1,9 @@
-package org.aau;
+package org.aau.runner;
 
-import org.aau.crawler.HtmlParser;
-import org.aau.crawler.PageAnalyzer;
+import org.aau.crawler.parser.HtmlParserImpl;
+import org.aau.crawler.analyzer.PageAnalyzerImpl;
 import org.aau.crawler.WebCrawler;
-import org.aau.crawler.client.WebCrawlerClient;
+import org.aau.crawler.client.WebCrawlerClientImpl;
 import org.aau.writer.MarkdownFormatter;
 import org.aau.writer.MarkdownWriter;
 
@@ -13,8 +13,8 @@ import java.time.OffsetDateTime;
 
 public class WebCrawlerRunner {
 
-    private final WebCrawler crawler;
-    private final String outputDir;
+    protected final WebCrawler crawler;
+    protected final String outputDir;
 
     public WebCrawlerRunner(String startUrl, int maximumDepth, String outputDir) {
         this.crawler = initializeCrawler(startUrl, maximumDepth);
@@ -26,14 +26,14 @@ public class WebCrawlerRunner {
         return writeCrawlerResultsToFile(crawler);
     }
 
-    private Path writeCrawlerResultsToFile(WebCrawler crawler) throws IOException {
+    protected Path writeCrawlerResultsToFile(WebCrawler crawler) throws IOException {
         var writer = new MarkdownWriter(outputDir, new MarkdownFormatter());
         return writer.writeResultsToFile(crawler.getCrawledLinks(), OffsetDateTime.now());
     }
 
-    private WebCrawler initializeCrawler(String startUrl, int maxDepth) {
-        var client = new WebCrawlerClient();
-        var analyzer = new PageAnalyzer(new HtmlParser());
+    protected WebCrawler initializeCrawler(String startUrl, int maxDepth) {
+        var client = new WebCrawlerClientImpl();
+        var analyzer = new PageAnalyzerImpl(new HtmlParserImpl());
         return new WebCrawler(startUrl, maxDepth, client, analyzer);
     }
 }
