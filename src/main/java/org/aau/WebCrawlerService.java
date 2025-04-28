@@ -21,8 +21,9 @@ public class WebCrawlerService {
             }
 
             try {
-                Path result = new WebCrawlerRunner().run(startUrl, maximumDepth, "build");
-                System.out.printf("Crawl finished. Report: %s\n", result.toAbsolutePath());
+                var runner = new WebCrawlerRunner(startUrl, maximumDepth, "build");
+                Path result = runner.executeCrawl();
+                System.out.printf("Crawl finished. Report available at: %s\n", result.toAbsolutePath());
             } catch (Exception e) {
                 System.err.printf("Crawl failed: %s\n", e.getMessage());
             }
