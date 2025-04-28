@@ -1,5 +1,6 @@
 package org.aau.runner;
 
+import org.aau.crawler.WebCrawler;
 import org.aau.crawler.parser.HtmlParserImpl;
 import org.aau.crawler.analyzer.PageAnalyzerImpl;
 import org.aau.crawler.WebCrawlerImpl;
@@ -13,7 +14,7 @@ import java.time.OffsetDateTime;
 
 public class WebCrawlerRunner {
 
-    protected final WebCrawlerImpl crawler;
+    protected final WebCrawler crawler;
     protected final String outputDir;
 
     public WebCrawlerRunner(String startUrl, int maximumDepth, String outputDir) {
@@ -26,12 +27,12 @@ public class WebCrawlerRunner {
         return writeCrawlerResultsToFile(crawler);
     }
 
-    protected Path writeCrawlerResultsToFile(WebCrawlerImpl crawler) throws IOException {
+    protected Path writeCrawlerResultsToFile(WebCrawler crawler) throws IOException {
         var writer = new MarkdownWriter(outputDir, new MarkdownFormatter());
         return writer.writeResultsToFile(crawler.getCrawledLinks(), OffsetDateTime.now());
     }
 
-    protected WebCrawlerImpl initializeCrawler(String startUrl, int maxDepth) {
+    protected WebCrawler initializeCrawler(String startUrl, int maxDepth) {
         var client = new WebCrawlerClientImpl();
         var analyzer = new PageAnalyzerImpl(new HtmlParserImpl());
         return new WebCrawlerImpl(startUrl, maxDepth, client, analyzer);
