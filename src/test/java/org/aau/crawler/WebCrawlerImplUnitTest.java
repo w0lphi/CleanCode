@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -51,6 +52,12 @@ public class WebCrawlerImplUnitTest {
         RuntimeException re = assertThrows(RuntimeException.class, () -> webCrawler.start());
         assertEquals(exception, re.getCause());
         verify(webCrawler).crawlLinkRecursively(START_URL, 0);
+    }
+
+    @Test
+    void crawlLinkRecursivelyShouldDoNothingIfMaxDepthIsReached(){
+        assertDoesNotThrow(() -> webCrawler.crawlLinkRecursively(START_URL, 2));
+        verify(webCrawlerClientMock, never()).isPageAvailable(anyString());
     }
 
     @Test
