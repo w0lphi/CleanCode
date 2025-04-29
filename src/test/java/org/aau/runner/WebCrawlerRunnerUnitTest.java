@@ -90,7 +90,7 @@ public class WebCrawlerRunnerUnitTest {
     }
 
     @Test
-    void testExecuteCrawl() throws IOException {
+    void testRun() throws IOException {
         var webCrawlerRunner = new WebCrawlerRunner(startUrl, 1, OUTPUT_DIR) {
             @Override
             protected WebCrawler createCrawler(String startUrl, int maximumDepth) {
@@ -103,14 +103,14 @@ public class WebCrawlerRunnerUnitTest {
             }
         };
 
-        webCrawlerRunner.executeCrawl();
+        webCrawlerRunner.run();
         verify(crawlerMock).start();
         verify(writerMock).writeResultsToFile(eq(links), any(OffsetDateTime.class));
         verify(crawlerMock).getCrawledLinks();
     }
 
     @Test
-    void executeCrawlShouldThrowRuntimeExceptionIfWritingFails() throws IOException {
+    void runShouldThrowRuntimeExceptionIfWritingFails() throws IOException {
         var ioException = new IOException("Test Exception");
         when(writerMock.writeResultsToFile(anySet(), any(OffsetDateTime.class))).thenThrow(ioException);
         var webCrawlerRunner = new WebCrawlerRunner(startUrl, 1, OUTPUT_DIR) {
@@ -125,7 +125,7 @@ public class WebCrawlerRunnerUnitTest {
             }
         };
 
-        RuntimeException re = assertThrows(RuntimeException.class, webCrawlerRunner::executeCrawl);
+        RuntimeException re = assertThrows(RuntimeException.class, webCrawlerRunner::run);
         assertEquals(ioException, re.getCause());
     }
 

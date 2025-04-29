@@ -26,6 +26,7 @@ jacoco {
 }
 
 tasks.test {
+    systemProperty("project.buildDir", layout.buildDirectory.get().asFile.absolutePath)
     useJUnitPlatform()
     finalizedBy(tasks.jacocoTestReport)
 }

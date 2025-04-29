@@ -22,7 +22,7 @@ public class WebCrawlerRunner {
         this.writer = createMarkdownWriter(outputDir);
     }
 
-    public Path executeCrawl() {
+    public Path run() throws RuntimeException {
         try {
             crawler.start();
             return writeSortedCrawlerResultsToFile(crawler, OffsetDateTime.now());

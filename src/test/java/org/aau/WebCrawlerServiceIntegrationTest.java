@@ -1,7 +1,5 @@
-package org.aau.runner;
+package org.aau;
 
-import org.aau.crawler.WebCrawler;
-import org.aau.writer.MarkdownWriter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,53 +11,34 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.OffsetDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertLinesMatch;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anySet;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
 @ExtendWith(MockServerExtension.class)
-public class WebCrawlerRunnerIntegrationTest {
+public class WebCrawlerServiceIntegrationTest {
 
-    private static final String TEST_OUTPUT_DIR = "build/test";
+    private static final String TEST_OUTPUT_SUB_DIR = "crawler-service-test";
+    Path testDirectory;
     MockServerClient client;
-    WebCrawlerRunner webCrawlerRunner;
     String mockServerUrl;
-    WebCrawler webCrawler;
-    MarkdownWriter writer;
 
     @BeforeEach
     void setup(MockServerClient client) {
         this.client = client;
         this.mockServerUrl = "http://localhost:%d".formatted(client.getPort());
-        this.webCrawlerRunner = new WebCrawlerRunner(mockServerUrl, 2, TEST_OUTPUT_DIR) {
-            @Override
-            protected WebCrawler createCrawler(String startUrl, int maximumDepth) {
-                webCrawler = spy(super.createCrawler(startUrl, maximumDepth));
-                return webCrawler;
-            }
-
-            @Override
-            protected MarkdownWriter createMarkdownWriter(String outputDir) {
-                writer = spy(super.createMarkdownWriter(outputDir));
-                return writer;
-            }
-        };
+        String buildDir = System.getProperty("project.buildDir", "build"); // Fallback: "build"
+        String buildDirAbsolutPath = Path.of(buildDir).toAbsolutePath().toString();
+        this.testDirectory = Path.of(buildDirAbsolutPath, TEST_OUTPUT_SUB_DIR);
     }
 
     @Test
-    void testRun() throws IOException {
+    void testMain() throws IOException {
         String workingPath = "/a-working-path/" + UUID.randomUUID();
         String brokenPath = "/broken-path/" + UUID.randomUUID();
         String h1Page1 = "TestHeading1-" + UUID.randomUUID();
@@ -123,12 +102,8 @@ public class WebCrawlerRunnerIntegrationTest {
                         .withBody(htmlPage2)
         );
 
-        Path filepath = webCrawlerRunner.run();
-
-        assertNotNull(filepath);
-        verify(webCrawler).start();
-        verify(writer).writeResultsToFile(anySet(), any(OffsetDateTime.class));
-        verify(webCrawler, times(4)).getCrawledLinks();
+        String[] args = new String[]{mockServerUrl, "2", TEST_OUTPUT_SUB_DIR};
+        WebCrawlerService.main(args);
 
         List<String> expectedLines = List.of(
                 "# Crawl Results",
@@ -152,15 +127,21 @@ public class WebCrawlerRunnerIntegrationTest {
                 ""
         );
 
-        List<String> actualLines = Files.readAllLines(filepath, Charset.defaultCharset());
-        assertLinesMatch(expectedLines, actualLines);
+
+        try (Stream<Path> files = Files.list(testDirectory)) {
+            Path filepath = files
+                    .filter(Files::isRegularFile).min(Comparator.comparing(path -> path.getFileName().toString()))
+                    .orElseThrow(() -> new RuntimeException("No files found."));
+
+            List<String> actualLines = Files.readAllLines(filepath, Charset.defaultCharset());
+            assertLinesMatch(expectedLines, actualLines);
+        }
     }
 
     @AfterEach
     void teardown() throws IOException {
-        Path path = Paths.get(TEST_OUTPUT_DIR);
-        if (Files.exists(path)) {
-            try (var paths = Files.walk(path)) {
+        if (Files.exists(testDirectory)) {
+            try (var paths = Files.walk(testDirectory)) {
                 paths.sorted(Comparator.reverseOrder())
                         .forEach(p -> {
                             try {
