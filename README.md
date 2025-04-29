@@ -1,7 +1,15 @@
 # How to run 
 
-The Web crawler can be run by starting the `main()` Function within `org.aau.WebCrawlerService`. Then follow the prompts on the console.
-After the web cralwer has finished, the report will be available in the `build` directory within the project.
+First the web crawler has to be build with:
+
+`./gradlew build`
+
+Then it can be run by executing
+
+`./gradlew run --args='<startUrl> <maximumDepth>'`
+
+\<startUrl\> -> The Url to start the crawl from
+\<maximumDepth\> -> THe maximum depth which should be crawled
 
 # How to test
 

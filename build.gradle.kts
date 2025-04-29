@@ -1,6 +1,7 @@
 plugins {
     id("java")
     id("jacoco")
+    id("application")
 }
 
 group = "org.aau"
@@ -8,6 +9,10 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+}
+
+application {
+    mainClass.set("org.aau.WebCrawlerService")
 }
 
 java {
@@ -43,8 +48,4 @@ dependencies {
     testImplementation("org.mockito:mockito-core:5.3.1")
     testImplementation("org.mock-server:mockserver-junit-jupiter-no-dependencies:5.14.0")
     testImplementation("org.mock-server:mockserver-client-java-no-dependencies:5.14.0")
-}
-
-tasks.test {
-    useJUnitPlatform()
 }
