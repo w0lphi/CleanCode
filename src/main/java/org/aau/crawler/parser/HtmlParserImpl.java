@@ -10,6 +10,8 @@ import java.util.Set;
 
 public class HtmlParserImpl implements HtmlParser {
 
+    private static final String HEADING_LEVEL_CHARACTER = "^";
+
     @Override
     public Set<String> extractHeadings(Document htmlDocument) {
         Elements headings = htmlDocument.select(":is(h1,h2,h3,h4,h5)");
@@ -17,7 +19,7 @@ public class HtmlParserImpl implements HtmlParser {
         for (Element heading : headings) {
             String tagName = heading.tagName();
             int level = Integer.parseInt(tagName.substring(1));
-            String headingLevel = "+".repeat(level);
+            String headingLevel = HEADING_LEVEL_CHARACTER.repeat(level);
             headingSet.add(headingLevel + " " + heading.text());
         }
         return headingSet;
