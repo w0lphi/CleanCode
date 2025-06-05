@@ -10,12 +10,12 @@ public class WebCrawlerService {
     private static final String DEFAULT_OUTPUT_DIR = "build";
     private final WebCrawlerRunner webCrawlerRunner;
 
-    public WebCrawlerService(String startUrl, int maximumDepth) {
-        this(startUrl, maximumDepth, DEFAULT_OUTPUT_DIR);
+    public WebCrawlerService(String startUrl, int maximumDepth, int threadCount) {
+        this(startUrl, maximumDepth, threadCount, DEFAULT_OUTPUT_DIR);
     }
 
-    public WebCrawlerService(String startUrl, int maximumDepth, String outputDir) {
-        this.webCrawlerRunner = createWebCrawlerRunner(startUrl, maximumDepth, outputDir);
+    public WebCrawlerService(String startUrl, int maximumDepth, int threadCount, String outputDir) {
+        this.webCrawlerRunner = createWebCrawlerRunner(startUrl, maximumDepth, threadCount, outputDir);
     }
 
     public static void main(String[] args) {
@@ -36,18 +36,20 @@ public class WebCrawlerService {
             throw new NumberFormatException("Maximum depth cannot be negative");
         }
 
+        int threadCount = (args.length > 2) ? Integer.parseInt(args[2]) : 4;
+
         String outputDir = DEFAULT_OUTPUT_DIR;
-        if (args.length > 2) {
-            String subFolder = args[2];
+        if (args.length > 3) {
+            String subFolder = args[3];
             outputDir = String.join("/", outputDir, subFolder);
         }
 
         System.out.printf("Starting crawler: startUrl=%s, maximumDepth=%d%n", startUrl, maximumDepth);
-        new WebCrawlerService(startUrl, maximumDepth, outputDir).execute();
+        new WebCrawlerService(startUrl, maximumDepth, threadCount, outputDir).execute();
     }
 
-    protected WebCrawlerRunner createWebCrawlerRunner(String startUrl, int maximumDepth, String outputDir) {
-        return new WebCrawlerRunner(startUrl, maximumDepth, outputDir);
+    protected WebCrawlerRunner createWebCrawlerRunner(String startUrl, int maximumDepth, int threadCount, String outputDir) {
+        return new WebCrawlerRunner(startUrl, maximumDepth, threadCount, outputDir);
     }
 
     protected void execute() {

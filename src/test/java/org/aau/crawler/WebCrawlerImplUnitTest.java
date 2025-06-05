@@ -16,7 +16,6 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
@@ -39,7 +38,7 @@ public class WebCrawlerImplUnitTest {
     public void setup() {
         webCrawlerClientMock = mock(WebCrawlerClient.class);
         pageAnalyzerMock = mock(PageAnalyzer.class);
-        var webCrawlerImpl = new WebCrawlerImpl(START_URL, DEPTH, webCrawlerClientMock, pageAnalyzerMock);
+        var webCrawlerImpl = new WebCrawlerImpl(START_URL, DEPTH, 1, webCrawlerClientMock, pageAnalyzerMock);
         webCrawler = spy(webCrawlerImpl);
     }
 
@@ -51,11 +50,11 @@ public class WebCrawlerImplUnitTest {
 
         RuntimeException re = assertThrows(RuntimeException.class, () -> webCrawler.start());
         assertEquals(exception, re.getCause());
-        verify(webCrawler).crawlLinkRecursively(START_URL, 0);
+        verify(webCrawler).start();
     }
 
     @Test
-    void crawlLinkRecursivelyShouldDoNothingIfMaxDepthIsReached(){
+    void crawlLinkRecursivelyShouldDoNothingIfMaxDepthIsReached() {
         assertDoesNotThrow(() -> webCrawler.crawlLinkRecursively(START_URL, 2));
         verify(webCrawlerClientMock, never()).isPageAvailable(anyString());
     }

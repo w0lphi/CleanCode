@@ -20,9 +20,9 @@ public class WebCrawlerServiceUnitTest {
     @BeforeEach
     void setup() {
         webCrawlerRunnerMock = mock(WebCrawlerRunner.class);
-        webCrawlerService = new WebCrawlerService("http://example.com", 1) {
+        webCrawlerService = new WebCrawlerService("http://example.com", 1, 2) {
             @Override
-            protected WebCrawlerRunner createWebCrawlerRunner(String startUrl, int maximumDepth, String outputDir) {
+            protected WebCrawlerRunner createWebCrawlerRunner(String startUrl, int maximumDepth, int threadCount, String outputDir) {
                 return webCrawlerRunnerMock;
             }
         };

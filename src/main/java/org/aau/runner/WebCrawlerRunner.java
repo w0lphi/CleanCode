@@ -17,8 +17,8 @@ public class WebCrawlerRunner {
     private final WebCrawler crawler;
     private final MarkdownWriter writer;
 
-    public WebCrawlerRunner(String startUrl, int maximumDepth, String outputDir) {
-        this.crawler = createCrawler(startUrl, maximumDepth);
+    public WebCrawlerRunner(String startUrl, int maximumDepth, int threadCount, String outputDir) {
+        this.crawler = createCrawler(startUrl, maximumDepth, threadCount);
         this.writer = createMarkdownWriter(outputDir);
     }
 
@@ -35,10 +35,10 @@ public class WebCrawlerRunner {
         return writer.writeResultsToFile(new TreeSet<>(crawler.getCrawledLinks()), timestamp);
     }
 
-    protected WebCrawler createCrawler(String startUrl, int maximumDepth) {
+    protected WebCrawler createCrawler(String startUrl, int maximumDepth, int threadCount) {
         var client = new WebCrawlerClientImpl();
         var analyzer = new PageAnalyzerImpl(new HtmlParserImpl());
-        return new WebCrawlerImpl(startUrl, maximumDepth, client, analyzer);
+        return new WebCrawlerImpl(startUrl, maximumDepth, threadCount, client, analyzer);
     }
 
     protected MarkdownWriter createMarkdownWriter(String outputDir) {

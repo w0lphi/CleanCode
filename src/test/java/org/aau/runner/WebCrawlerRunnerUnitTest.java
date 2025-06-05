@@ -51,9 +51,9 @@ public class WebCrawlerRunnerUnitTest {
     @Test
     void testWriteSortedCrawlerResultsToFile() throws IOException {
         Path expectedPath = Path.of(OUTPUT_DIR).toAbsolutePath();
-        var webCrawlerRunner = new WebCrawlerRunner(startUrl, 1, OUTPUT_DIR) {
+        var webCrawlerRunner = new WebCrawlerRunner(startUrl, 1, 1, OUTPUT_DIR) {
             @Override
-            protected WebCrawler createCrawler(String startUrl, int maximumDepth) {
+            protected WebCrawler createCrawler(String startUrl, int maximumDepth, int threadCount) {
                 return crawlerMock;
             }
         };
@@ -91,9 +91,9 @@ public class WebCrawlerRunnerUnitTest {
 
     @Test
     void testRun() throws IOException {
-        var webCrawlerRunner = new WebCrawlerRunner(startUrl, 1, OUTPUT_DIR) {
+        var webCrawlerRunner = new WebCrawlerRunner(startUrl, 1, 1, OUTPUT_DIR) {
             @Override
-            protected WebCrawler createCrawler(String startUrl, int maximumDepth) {
+            protected WebCrawler createCrawler(String startUrl, int maximumDepth, int threadCount) {
                 return crawlerMock;
             }
 
@@ -113,9 +113,9 @@ public class WebCrawlerRunnerUnitTest {
     void runShouldThrowRuntimeExceptionIfWritingFails() throws IOException {
         var ioException = new IOException("Test Exception");
         when(writerMock.writeResultsToFile(anySet(), any(OffsetDateTime.class))).thenThrow(ioException);
-        var webCrawlerRunner = new WebCrawlerRunner(startUrl, 1, OUTPUT_DIR) {
+        var webCrawlerRunner = new WebCrawlerRunner(startUrl, 1, 1, OUTPUT_DIR) {
             @Override
-            protected WebCrawler createCrawler(String startUrl, int maximumDepth) {
+            protected WebCrawler createCrawler(String startUrl, int maximumDepth, int threadCount) {
                 return crawlerMock;
             }
 

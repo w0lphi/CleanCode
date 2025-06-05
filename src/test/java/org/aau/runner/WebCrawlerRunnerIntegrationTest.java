@@ -43,10 +43,11 @@ public class WebCrawlerRunnerIntegrationTest {
     void setup(MockServerClient client) {
         this.client = client;
         this.mockServerUrl = "http://localhost:%d".formatted(client.getPort());
-        this.webCrawlerRunner = new WebCrawlerRunner(mockServerUrl, 2, TEST_OUTPUT_DIR) {
+        this.webCrawlerRunner = new WebCrawlerRunner(mockServerUrl, 2, 1, TEST_OUTPUT_DIR) {
+
             @Override
-            protected WebCrawler createCrawler(String startUrl, int maximumDepth) {
-                webCrawler = spy(super.createCrawler(startUrl, maximumDepth));
+            protected WebCrawler createCrawler(String startUrl, int maximumDepth, int threadCount) {
+                webCrawler = spy(super.createCrawler(startUrl, maximumDepth, threadCount));
                 return webCrawler;
             }
 
