@@ -43,7 +43,7 @@ public class WebCrawlerRunnerIntegrationTest {
     void setup(MockServerClient client) {
         this.client = client;
         this.mockServerUrl = "http://localhost:%d".formatted(client.getPort());
-        this.webCrawlerRunner = new WebCrawlerRunner(mockServerUrl, 2, 1, TEST_OUTPUT_DIR) {
+        this.webCrawlerRunner = new WebCrawlerRunner(mockServerUrl, 2, 2, TEST_OUTPUT_DIR) {
 
             @Override
             protected WebCrawler createCrawler(String startUrl, int maximumDepth, int threadCount) {
@@ -129,7 +129,7 @@ public class WebCrawlerRunnerIntegrationTest {
         assertNotNull(filepath);
         verify(webCrawler).start();
         verify(writer).writeResultsToFile(anySet(), any(OffsetDateTime.class));
-        verify(webCrawler, times(4)).getCrawledLinks();
+        verify(webCrawler, times(1)).getCrawledLinks();
 
         List<String> expectedLines = List.of(
                 "# Crawl Results",

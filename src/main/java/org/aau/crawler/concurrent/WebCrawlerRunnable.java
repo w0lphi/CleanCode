@@ -66,18 +66,8 @@ public class WebCrawlerRunnable implements Runnable {
             try {
                 String html = webCrawlerClient.getPageContent(url);
                 WorkingLink link = analyzer.analyze(url, depth, html);
-
                 crawledLinks.add(link);
-
-                link.getSubLinks().forEach(sub -> {
-                    try {
-                        if (depth + 1 <= maximumDepth && !isAlreadyCrawledUrl(sub)) {
-                            urlQueue.put(new CrawlTask(sub, depth + 1));
-                        }
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
-                });
+                reportSublinks(link.getSubLinks(), depth);
             } catch (Exception e) {
                 crawledLinks.add(new BrokenLink(url, depth));
             }
@@ -86,7 +76,19 @@ public class WebCrawlerRunnable implements Runnable {
         }
     }
 
-    private boolean isAlreadyCrawledUrl(String url) {
+    protected void reportSublinks(Set<String> subLinks, int depth) {
+        subLinks.forEach(sub -> {
+            try {
+                if (depth + 1 <= maximumDepth && !isAlreadyCrawledUrl(sub)) {
+                    urlQueue.put(new CrawlTask(sub, depth + 1));
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+    }
+
+    protected boolean isAlreadyCrawledUrl(String url) {
         return crawledLinks.stream().anyMatch(crawlResult -> crawlResult.getUrl().equals(url));
     }
 }

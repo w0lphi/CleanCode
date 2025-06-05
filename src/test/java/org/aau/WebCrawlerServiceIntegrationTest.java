@@ -102,7 +102,7 @@ public class WebCrawlerServiceIntegrationTest {
                         .withBody(htmlPage2)
         );
 
-        String[] args = new String[]{mockServerUrl, "2", TEST_OUTPUT_SUB_DIR};
+        String[] args = new String[]{mockServerUrl, "2", "1", TEST_OUTPUT_SUB_DIR};
         WebCrawlerService.main(args);
 
         List<String> expectedLines = List.of(
