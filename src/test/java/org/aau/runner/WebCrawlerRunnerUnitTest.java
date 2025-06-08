@@ -1,5 +1,7 @@
 package org.aau.runner;
 
+import org.aau.config.DomainFilter;
+import org.aau.config.WebCrawlerConfiguration;
 import org.aau.crawler.WebCrawler;
 import org.aau.crawler.result.BrokenLink;
 import org.aau.crawler.result.Link;
@@ -51,12 +53,6 @@ public class WebCrawlerRunnerUnitTest {
     @Test
     void testWriteSortedCrawlerResultsToFile() throws IOException {
         Path expectedPath = Path.of(OUTPUT_DIR).toAbsolutePath();
-        var webCrawlerRunner = new WebCrawlerRunner(startUrl, 1, 1, OUTPUT_DIR) {
-            @Override
-            protected WebCrawler createCrawler(String startUrl, int maximumDepth, int threadCount) {
-                return crawlerMock;
-            }
-        };
 
         OffsetDateTime timestamp = OffsetDateTime.now();
         String expectedContent = """
@@ -76,6 +72,7 @@ public class WebCrawlerRunnerUnitTest {
                 
                 """.formatted(timestamp.format(DATE_TIME_FORMATTER));
 
+        var webCrawlerRunner = createWebCrawlerRunner(false);
         Path filePath = webCrawlerRunner.writeSortedCrawlerResultsToFile(crawlerMock, timestamp);
 
         assertTrue(filePath.toAbsolutePath().toString().startsWith(expectedPath + "/report-"));
@@ -91,18 +88,8 @@ public class WebCrawlerRunnerUnitTest {
 
     @Test
     void testRun() throws IOException {
-        var webCrawlerRunner = new WebCrawlerRunner(startUrl, 1, 1, OUTPUT_DIR) {
-            @Override
-            protected WebCrawler createCrawler(String startUrl, int maximumDepth, int threadCount) {
-                return crawlerMock;
-            }
 
-            @Override
-            protected MarkdownWriter createMarkdownWriter(String outputDir) {
-                return writerMock;
-            }
-        };
-
+        var webCrawlerRunner = createWebCrawlerRunner(true);
         webCrawlerRunner.run();
         verify(crawlerMock).start();
         verify(writerMock).writeResultsToFile(eq(links), any(OffsetDateTime.class));
@@ -113,20 +100,33 @@ public class WebCrawlerRunnerUnitTest {
     void runShouldThrowRuntimeExceptionIfWritingFails() throws IOException {
         var ioException = new IOException("Test Exception");
         when(writerMock.writeResultsToFile(anySet(), any(OffsetDateTime.class))).thenThrow(ioException);
-        var webCrawlerRunner = new WebCrawlerRunner(startUrl, 1, 1, OUTPUT_DIR) {
+
+        var webCrawlerRunner = createWebCrawlerRunner(true);
+
+        RuntimeException re = assertThrows(RuntimeException.class, webCrawlerRunner::run);
+        assertEquals(ioException, re.getCause());
+    }
+
+    private WebCrawlerRunner createWebCrawlerRunner(boolean mockWriter) {
+        var domainFilter = new DomainFilter(Set.of(startUrl));
+        var configuration = new WebCrawlerConfiguration(
+                startUrl,
+                1,
+                1,
+                domainFilter,
+                OUTPUT_DIR
+        );
+        return new WebCrawlerRunner(configuration) {
             @Override
-            protected WebCrawler createCrawler(String startUrl, int maximumDepth, int threadCount) {
+            protected WebCrawler createCrawler(WebCrawlerConfiguration configuration) {
                 return crawlerMock;
             }
 
             @Override
             protected MarkdownWriter createMarkdownWriter(String outputDir) {
-                return writerMock;
+                return mockWriter ? writerMock : super.createMarkdownWriter(outputDir);
             }
         };
-
-        RuntimeException re = assertThrows(RuntimeException.class, webCrawlerRunner::run);
-        assertEquals(ioException, re.getCause());
     }
 
 }

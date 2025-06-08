@@ -1,8 +1,13 @@
 package org.aau;
 
+import org.aau.config.DomainFilter;
+import org.aau.config.WebCrawlerConfiguration;
 import org.aau.runner.WebCrawlerRunner;
 
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class WebCrawlerService {
 
@@ -10,12 +15,8 @@ public class WebCrawlerService {
     private static final String DEFAULT_OUTPUT_DIR = "build";
     private final WebCrawlerRunner webCrawlerRunner;
 
-    public WebCrawlerService(String startUrl, int maximumDepth, int threadCount) {
-        this(startUrl, maximumDepth, threadCount, DEFAULT_OUTPUT_DIR);
-    }
-
-    public WebCrawlerService(String startUrl, int maximumDepth, int threadCount, String outputDir) {
-        this.webCrawlerRunner = createWebCrawlerRunner(startUrl, maximumDepth, threadCount, outputDir);
+    public WebCrawlerService(WebCrawlerConfiguration configuration) {
+        this.webCrawlerRunner = createWebCrawlerRunner(configuration);
     }
 
     public static void main(String[] args) {
@@ -36,20 +37,35 @@ public class WebCrawlerService {
             throw new NumberFormatException("Maximum depth cannot be negative");
         }
 
-        int threadCount = (args.length > 2) ? Integer.parseInt(args[2]) : 4;
+        int threadCount = (args.length > 2) ? Integer.parseInt(args[2]) : 1;
+
+        if (threadCount < 1) {
+            throw new NumberFormatException("Thread count cannot be less than 1");
+        }
+
+        Set<String> allowedDomains = new HashSet<>();
+        allowedDomains.add(startUrl);
+
+        if (args.length > 3) {
+            allowedDomains.addAll(List.of(args[3].split(",")));
+        }
+
+        DomainFilter domainFilter = new DomainFilter(allowedDomains);
 
         String outputDir = DEFAULT_OUTPUT_DIR;
-        if (args.length > 3) {
-            String subFolder = args[3];
+        if (args.length > 4) {
+            String subFolder = args[4];
             outputDir = String.join("/", outputDir, subFolder);
         }
 
-        System.out.printf("Starting crawler: startUrl=%s, maximumDepth=%d%n", startUrl, maximumDepth);
-        new WebCrawlerService(startUrl, maximumDepth, threadCount, outputDir).execute();
+        WebCrawlerConfiguration configuration = new WebCrawlerConfiguration(startUrl, maximumDepth, threadCount, domainFilter, outputDir);
+
+        System.out.printf("Starting crawler: configuration=%s", configuration);
+        new WebCrawlerService(configuration).execute();
     }
 
-    protected WebCrawlerRunner createWebCrawlerRunner(String startUrl, int maximumDepth, int threadCount, String outputDir) {
-        return new WebCrawlerRunner(startUrl, maximumDepth, threadCount, outputDir);
+    protected WebCrawlerRunner createWebCrawlerRunner(WebCrawlerConfiguration configuration) {
+        return new WebCrawlerRunner(configuration);
     }
 
     protected void execute() {

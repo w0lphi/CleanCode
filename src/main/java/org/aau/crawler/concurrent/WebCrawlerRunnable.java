@@ -1,64 +1,68 @@
 package org.aau.crawler.concurrent;
 
+import org.aau.config.WebCrawlerConfiguration;
 import org.aau.crawler.analyzer.PageAnalyzer;
 import org.aau.crawler.client.WebCrawlerClient;
 import org.aau.crawler.result.BrokenLink;
-import org.aau.crawler.result.Link;
 import org.aau.crawler.result.WorkingLink;
 
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class WebCrawlerRunnable implements Runnable {
 
-    private final BlockingQueue<CrawlTask> urlQueue;
-    private final Set<Link> crawledLinks;
+    private final WebCrawlerSharedState sharedState;
     private final WebCrawlerClient webCrawlerClient;
     private final PageAnalyzer analyzer;
-    private final int maximumDepth;
-    private final AtomicInteger activeThreads;
+    private final WebCrawlerConfiguration configuration;
 
-    public WebCrawlerRunnable(BlockingQueue<CrawlTask> urlQueue, Set<Link> crawledLinks, WebCrawlerClient webCrawlerClient, PageAnalyzer analyzer, int maximumDepth, AtomicInteger activeThreads) {
-        this.urlQueue = urlQueue;
-        this.crawledLinks = crawledLinks;
+    public WebCrawlerRunnable(WebCrawlerSharedState sharedState,
+                              WebCrawlerClient webCrawlerClient,
+                              PageAnalyzer analyzer,
+                              WebCrawlerConfiguration configuration) {
+        this.sharedState = sharedState;
         this.webCrawlerClient = webCrawlerClient;
         this.analyzer = analyzer;
-        this.maximumDepth = maximumDepth;
-        this.activeThreads = activeThreads;
+        this.configuration = configuration;
     }
 
     @Override
     public void run() {
+        System.out.printf("WebCrawler thread %s started %n", Thread.currentThread().getName());
         while (true) {
             CrawlTask task = null;
             try {
-                task = urlQueue.poll(5, TimeUnit.SECONDS);
+                System.out.printf("WebCrawler thread %s trying to fetch task... %n", Thread.currentThread().getName());
+                task = sharedState.urlQueue().poll(5, TimeUnit.SECONDS);
                 if (task == null) {
-                    if (activeThreads.get() == 0 && urlQueue.isEmpty()) {
+                    if (sharedState.activeThreads().get() == 0 && sharedState.urlQueue().isEmpty()) {
+                        System.out.printf("WebCrawler thread %s: No further tasks and no active threads, finishing job...%n", Thread.currentThread().getName());
+                        sharedState.completionLatch().countDown();
                         break;
                     }
                     continue;
                 }
 
-                activeThreads.incrementAndGet();
+                System.out.printf("WebCrawler thread %s fetched task: %s %n", Thread.currentThread().getName(), task);
+                sharedState.activeThreads().incrementAndGet();
                 crawlLink(task.url(), task.depth());
 
             } catch (InterruptedException e) {
+                System.err.printf("Web Crawler thread %s threw InterruptedException while executing task: %s", Thread.currentThread().getName(), e.getMessage());
                 Thread.currentThread().interrupt();
                 break;
             } finally {
                 if (task != null) {
-                    activeThreads.decrementAndGet();
+                    sharedState.activeThreads().decrementAndGet();
                 }
             }
         }
-        System.out.println("Thread " + Thread.currentThread().getName() + " finished.");
+        System.out.printf("WebCrawler thread %s finished %n", Thread.currentThread().getName());
     }
 
     protected void crawlLink(String url, int depth) {
-        if (depth > maximumDepth || isAlreadyCrawledUrl(url)) {
+        if (!shouldCrawl(url, depth)) {
+            System.out.printf("WebCrawler thread %s skipping link %s %n", Thread.currentThread().getName(), url);
             return;
         }
 
@@ -66,21 +70,27 @@ public class WebCrawlerRunnable implements Runnable {
             try {
                 String html = webCrawlerClient.getPageContent(url);
                 WorkingLink link = analyzer.analyze(url, depth, html);
-                crawledLinks.add(link);
+                sharedState.crawledLinks().add(link);
                 reportSublinks(link.getSubLinks(), depth);
+                System.out.printf("WebCrawler thread %s successfully crawled link %s %n", Thread.currentThread().getName(), url);
             } catch (Exception e) {
-                crawledLinks.add(new BrokenLink(url, depth));
+                System.err.printf("%s: Unexpected error while crawling %s: %s%n", Thread.currentThread().getName(), url, e.getMessage());
+                sharedState.crawledLinks().add(new BrokenLink(url, depth));
             }
         } else {
-            crawledLinks.add(new BrokenLink(url, depth));
+            sharedState.crawledLinks().add(new BrokenLink(url, depth));
         }
+    }
+
+    protected boolean shouldCrawl(String url, int depth) {
+        return depth <= configuration.maximumDepth() && configuration.isAllowedDomain(url) && !isAlreadyCrawledUrl(url);
     }
 
     protected void reportSublinks(Set<String> subLinks, int depth) {
         subLinks.forEach(sub -> {
             try {
-                if (depth + 1 <= maximumDepth && !isAlreadyCrawledUrl(sub)) {
-                    urlQueue.put(new CrawlTask(sub, depth + 1));
+                if (depth + 1 <= configuration.maximumDepth() && !isAlreadyCrawledUrl(sub)) {
+                    sharedState.urlQueue().put(new CrawlTask(sub, depth + 1));
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -89,6 +99,6 @@ public class WebCrawlerRunnable implements Runnable {
     }
 
     protected boolean isAlreadyCrawledUrl(String url) {
-        return crawledLinks.stream().anyMatch(crawlResult -> crawlResult.getUrl().equals(url));
+        return sharedState.containsCrawledUrl(url);
     }
 }

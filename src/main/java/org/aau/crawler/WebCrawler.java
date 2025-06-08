@@ -8,4 +8,6 @@ public interface WebCrawler {
     void start();
 
     Set<Link> getCrawledLinks();
+
+    void awaitCompletion() throws InterruptedException;
 }

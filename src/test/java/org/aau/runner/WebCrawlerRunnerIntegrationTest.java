@@ -1,5 +1,7 @@
 package org.aau.runner;
 
+import org.aau.config.DomainFilter;
+import org.aau.config.WebCrawlerConfiguration;
 import org.aau.crawler.WebCrawler;
 import org.aau.writer.MarkdownWriter;
 import org.junit.jupiter.api.AfterEach;
@@ -17,6 +19,7 @@ import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertLinesMatch;
@@ -43,11 +46,19 @@ public class WebCrawlerRunnerIntegrationTest {
     void setup(MockServerClient client) {
         this.client = client;
         this.mockServerUrl = "http://localhost:%d".formatted(client.getPort());
-        this.webCrawlerRunner = new WebCrawlerRunner(mockServerUrl, 2, 2, TEST_OUTPUT_DIR) {
+        var domainFilter = new DomainFilter(Set.of(mockServerUrl));
+        var configuration = new WebCrawlerConfiguration(
+                mockServerUrl,
+                2,
+                1,
+                domainFilter,
+                TEST_OUTPUT_DIR
+        );
 
+        this.webCrawlerRunner = new WebCrawlerRunner(configuration) {
             @Override
-            protected WebCrawler createCrawler(String startUrl, int maximumDepth, int threadCount) {
-                webCrawler = spy(super.createCrawler(startUrl, maximumDepth, threadCount));
+            protected WebCrawler createCrawler(WebCrawlerConfiguration configuration) {
+                webCrawler = spy(super.createCrawler(configuration));
                 return webCrawler;
             }
 
@@ -60,7 +71,7 @@ public class WebCrawlerRunnerIntegrationTest {
     }
 
     @Test
-    void testRun() throws IOException {
+    void testRun() throws IOException, InterruptedException {
         String workingPath = "/a-working-path/" + UUID.randomUUID();
         String brokenPath = "/broken-path/" + UUID.randomUUID();
         String h1Page1 = "TestHeading1-" + UUID.randomUUID();
@@ -125,6 +136,8 @@ public class WebCrawlerRunnerIntegrationTest {
         );
 
         Path filepath = webCrawlerRunner.run();
+
+        webCrawler.awaitCompletion();
 
         assertNotNull(filepath);
         verify(webCrawler).start();

@@ -1,5 +1,6 @@
 package org.aau.runner;
 
+import org.aau.config.WebCrawlerConfiguration;
 import org.aau.crawler.WebCrawler;
 import org.aau.crawler.WebCrawlerImpl;
 import org.aau.crawler.analyzer.PageAnalyzerImpl;
@@ -17,9 +18,9 @@ public class WebCrawlerRunner {
     private final WebCrawler crawler;
     private final MarkdownWriter writer;
 
-    public WebCrawlerRunner(String startUrl, int maximumDepth, int threadCount, String outputDir) {
-        this.crawler = createCrawler(startUrl, maximumDepth, threadCount);
-        this.writer = createMarkdownWriter(outputDir);
+    public WebCrawlerRunner(WebCrawlerConfiguration configuration) {
+        this.crawler = createCrawler(configuration);
+        this.writer = createMarkdownWriter(configuration.outputDir());
     }
 
     public Path run() throws RuntimeException {
@@ -27,6 +28,7 @@ public class WebCrawlerRunner {
             crawler.start();
             return writeSortedCrawlerResultsToFile(crawler, OffsetDateTime.now());
         } catch (IOException e) {
+            System.err.printf("An unexpected error occurred while running WebCrawlerRunner: %s%n", e.getMessage());
             throw new RuntimeException(e);
         }
     }
@@ -35,10 +37,10 @@ public class WebCrawlerRunner {
         return writer.writeResultsToFile(new TreeSet<>(crawler.getCrawledLinks()), timestamp);
     }
 
-    protected WebCrawler createCrawler(String startUrl, int maximumDepth, int threadCount) {
+    protected WebCrawler createCrawler(WebCrawlerConfiguration configuration) {
         var client = new WebCrawlerClientImpl();
         var analyzer = new PageAnalyzerImpl(new HtmlParserImpl());
-        return new WebCrawlerImpl(startUrl, maximumDepth, threadCount, client, analyzer);
+        return new WebCrawlerImpl(configuration, client, analyzer);
     }
 
     protected MarkdownWriter createMarkdownWriter(String outputDir) {

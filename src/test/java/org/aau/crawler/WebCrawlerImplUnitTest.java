@@ -1,9 +1,13 @@
 package org.aau.crawler;
 
+import org.aau.config.DomainFilter;
+import org.aau.config.WebCrawlerConfiguration;
 import org.aau.crawler.analyzer.PageAnalyzer;
 import org.aau.crawler.client.WebCrawlerClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -26,7 +30,15 @@ public class WebCrawlerImplUnitTest {
     public void setup() {
         webCrawlerClientMock = mock(WebCrawlerClient.class);
         pageAnalyzerMock = mock(PageAnalyzer.class);
-        var webCrawlerImpl = new WebCrawlerImpl(START_URL, DEPTH, 1, webCrawlerClientMock, pageAnalyzerMock);
+        var domainFilter = new DomainFilter(Set.of(START_URL));
+        var configuration = new WebCrawlerConfiguration(
+                START_URL,
+                DEPTH,
+                1,
+                domainFilter,
+                ""
+        );
+        var webCrawlerImpl = new WebCrawlerImpl(configuration, webCrawlerClientMock, pageAnalyzerMock);
         webCrawler = spy(webCrawlerImpl);
     }
 

@@ -1,10 +1,13 @@
 package org.aau;
 
+import org.aau.config.DomainFilter;
+import org.aau.config.WebCrawlerConfiguration;
 import org.aau.runner.WebCrawlerRunner;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -20,9 +23,19 @@ public class WebCrawlerServiceUnitTest {
     @BeforeEach
     void setup() {
         webCrawlerRunnerMock = mock(WebCrawlerRunner.class);
-        webCrawlerService = new WebCrawlerService("http://example.com", 1, 2) {
+
+        var domainFilter = new DomainFilter(Set.of("http://example.com"));
+        var configuration = new WebCrawlerConfiguration(
+                "http://example.com",
+                1,
+                1,
+                domainFilter,
+                ""
+        );
+
+        webCrawlerService = new WebCrawlerService(configuration) {
             @Override
-            protected WebCrawlerRunner createWebCrawlerRunner(String startUrl, int maximumDepth, int threadCount, String outputDir) {
+            protected WebCrawlerRunner createWebCrawlerRunner(WebCrawlerConfiguration webCrawlerConfiguration) {
                 return webCrawlerRunnerMock;
             }
         };
