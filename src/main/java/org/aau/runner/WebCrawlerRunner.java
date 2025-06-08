@@ -3,9 +3,6 @@ package org.aau.runner;
 import org.aau.config.WebCrawlerConfiguration;
 import org.aau.crawler.WebCrawler;
 import org.aau.crawler.WebCrawlerImpl;
-import org.aau.crawler.analyzer.PageAnalyzerImpl;
-import org.aau.crawler.client.WebCrawlerClientImpl;
-import org.aau.crawler.parser.HtmlParserImpl;
 import org.aau.writer.MarkdownWriter;
 
 import java.io.IOException;
@@ -38,9 +35,7 @@ public class WebCrawlerRunner {
     }
 
     protected WebCrawler createCrawler(WebCrawlerConfiguration configuration) {
-        var client = new WebCrawlerClientImpl();
-        var analyzer = new PageAnalyzerImpl(new HtmlParserImpl());
-        return new WebCrawlerImpl(configuration, client, analyzer);
+        return new WebCrawlerImpl(configuration);
     }
 
     protected MarkdownWriter createMarkdownWriter(String outputDir) {

@@ -8,9 +8,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -22,14 +25,11 @@ public class WebCrawlerImplUnitTest {
 
     private static final String START_URL = "http://test.com";
     private static final int DEPTH = 1;
-    WebCrawlerClient webCrawlerClientMock;
-    PageAnalyzer pageAnalyzerMock;
+    ExecutorService executorServiceMock = mock(ExecutorService.class);
     WebCrawlerImpl webCrawler;
 
     @BeforeEach
     public void setup() {
-        webCrawlerClientMock = mock(WebCrawlerClient.class);
-        pageAnalyzerMock = mock(PageAnalyzer.class);
         var domainFilter = new DomainFilter(Set.of(START_URL));
         var configuration = new WebCrawlerConfiguration(
                 START_URL,
@@ -38,15 +38,19 @@ public class WebCrawlerImplUnitTest {
                 domainFilter,
                 ""
         );
-        var webCrawlerImpl = new WebCrawlerImpl(configuration, webCrawlerClientMock, pageAnalyzerMock);
+        var webCrawlerImpl = new WebCrawlerImpl(configuration){
+            @Override
+            protected ExecutorService createExecutorService(int threadCount) {
+                return executorServiceMock;
+            }
+        };
         webCrawler = spy(webCrawlerImpl);
     }
 
     @Test
     void startShouldThrowRuntimeExceptionOnError() throws Exception {
-        var exception = new Exception("Test exception");
-        when(webCrawlerClientMock.isPageAvailable(anyString())).thenReturn(false);
-        doThrow(exception).when(webCrawlerClientMock).close();
+        var exception = new NullPointerException("Test exception");
+       when(executorServiceMock.submit(any(Runnable.class))).thenThrow(exception);
 
         RuntimeException re = assertThrows(RuntimeException.class, () -> webCrawler.start());
         assertEquals(exception, re.getCause());

@@ -2,6 +2,7 @@ package org.aau.config;
 
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashSet;
@@ -31,12 +32,17 @@ public class DomainFilter {
     }
 
     public String getDomainFromUrl(String urlString) {
+
+        if (urlString == null || urlString.trim().isEmpty()) {
+            return null;
+        }
+
         try {
-            URL url = URI.create(urlString).toURL();
+            URI url = new URI(urlString);
             String host = url.getHost();
             return normalizeDomain(host);
-        } catch (MalformedURLException e) {
-            System.err.printf("Invalid URL encountered %s: %s", urlString, e.getMessage());
+        } catch (URISyntaxException e) {
+            System.err.printf("Invalid URI encountered %s: %s", urlString, e.getMessage());
             return null;
         }
     }

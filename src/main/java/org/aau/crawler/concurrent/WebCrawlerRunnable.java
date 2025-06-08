@@ -2,7 +2,10 @@ package org.aau.crawler.concurrent;
 
 import org.aau.config.WebCrawlerConfiguration;
 import org.aau.crawler.analyzer.PageAnalyzer;
+import org.aau.crawler.analyzer.PageAnalyzerImpl;
 import org.aau.crawler.client.WebCrawlerClient;
+import org.aau.crawler.client.WebCrawlerClientImpl;
+import org.aau.crawler.parser.HtmlParserImpl;
 import org.aau.crawler.result.BrokenLink;
 import org.aau.crawler.result.WorkingLink;
 
@@ -16,19 +19,25 @@ public class WebCrawlerRunnable implements Runnable {
     private final PageAnalyzer analyzer;
     private final WebCrawlerConfiguration configuration;
 
-    public WebCrawlerRunnable(WebCrawlerSharedState sharedState,
-                              WebCrawlerClient webCrawlerClient,
-                              PageAnalyzer analyzer,
-                              WebCrawlerConfiguration configuration) {
+    public WebCrawlerRunnable(WebCrawlerSharedState sharedState, WebCrawlerConfiguration configuration) {
         this.sharedState = sharedState;
-        this.webCrawlerClient = webCrawlerClient;
-        this.analyzer = analyzer;
+        this.webCrawlerClient = createWebCrawlerClient();
+        this.analyzer = createPageAnalyzer();
         this.configuration = configuration;
     }
 
     @Override
     public void run() {
         System.out.printf("WebCrawler thread %s started %n", Thread.currentThread().getName());
+        try(webCrawlerClient){
+            processCrawlTasks();
+        } catch (Exception e) {
+            System.err.printf("Unexpected error while running WebCrawler thread %s: %s%n", Thread.currentThread().getName(), e.getMessage());
+        }
+        System.out.printf("WebCrawler thread %s finished %n", Thread.currentThread().getName());
+    }
+
+    protected void processCrawlTasks(){
         while (true) {
             CrawlTask task = null;
             try {
@@ -43,12 +52,12 @@ public class WebCrawlerRunnable implements Runnable {
                     continue;
                 }
 
-                System.out.printf("WebCrawler thread %s fetched task: %s %n", Thread.currentThread().getName(), task);
+                System.out.printf("WebCrawler thread %s fetched task: %s%n", Thread.currentThread().getName(), task);
                 sharedState.activeThreads().incrementAndGet();
                 crawlLink(task.url(), task.depth());
 
             } catch (InterruptedException e) {
-                System.err.printf("Web Crawler thread %s threw InterruptedException while executing task: %s", Thread.currentThread().getName(), e.getMessage());
+                System.err.printf("Web Crawler thread %s threw InterruptedException while executing task: %s%n", Thread.currentThread().getName(), e.getMessage());
                 Thread.currentThread().interrupt();
                 break;
             } finally {
@@ -57,7 +66,6 @@ public class WebCrawlerRunnable implements Runnable {
                 }
             }
         }
-        System.out.printf("WebCrawler thread %s finished %n", Thread.currentThread().getName());
     }
 
     protected void crawlLink(String url, int depth) {
@@ -100,5 +108,13 @@ public class WebCrawlerRunnable implements Runnable {
 
     protected boolean isAlreadyCrawledUrl(String url) {
         return sharedState.containsCrawledUrl(url);
+    }
+
+    protected WebCrawlerClient createWebCrawlerClient() {
+        return new WebCrawlerClientImpl();
+    }
+
+    protected PageAnalyzer createPageAnalyzer() {
+        return new PageAnalyzerImpl(new HtmlParserImpl());
     }
 }

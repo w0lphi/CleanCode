@@ -1,8 +1,6 @@
 package org.aau.crawler;
 
 import org.aau.config.WebCrawlerConfiguration;
-import org.aau.crawler.analyzer.PageAnalyzer;
-import org.aau.crawler.client.WebCrawlerClient;
 import org.aau.crawler.concurrent.CrawlTask;
 import org.aau.crawler.concurrent.WebCrawlerRunnable;
 import org.aau.crawler.concurrent.WebCrawlerSharedState;
@@ -23,48 +21,44 @@ public class WebCrawlerImpl implements WebCrawler {
 
     private final WebCrawlerConfiguration configuration;
     private final Set<Link> crawledLinks;
-    private final WebCrawlerClient webCrawlerClient;
-    private final PageAnalyzer analyzer;
 
     private final ExecutorService crawlExecutor;
     private final BlockingQueue<CrawlTask> urlQueue;
     private final AtomicInteger activeThreads = new AtomicInteger(0);
     private final CountDownLatch completionLatch;
 
-    public WebCrawlerImpl(WebCrawlerConfiguration configuration, WebCrawlerClient client, PageAnalyzer analyzer) {
+    public WebCrawlerImpl(WebCrawlerConfiguration configuration) {
         this.configuration = configuration;
-        this.webCrawlerClient = client;
-        this.analyzer = analyzer;
         this.crawlExecutor = createExecutorService(configuration.threadCount());
         this.crawledLinks = createSynchronizedLinkSet();
         this.urlQueue = createUrlQueue();
         this.completionLatch = createCompletionLatch();
     }
 
-    private ExecutorService createExecutorService(int threadCount) {
+    protected ExecutorService createExecutorService(int threadCount) {
         return Executors.newFixedThreadPool(threadCount);
     }
 
-    private Set<Link> createSynchronizedLinkSet() {
+    protected Set<Link> createSynchronizedLinkSet() {
         return Collections.synchronizedSet(new HashSet<>());
     }
 
-    private BlockingQueue<CrawlTask> createUrlQueue() {
+    protected BlockingQueue<CrawlTask> createUrlQueue() {
         return new LinkedBlockingQueue<>();
     }
 
-    private CountDownLatch createCompletionLatch() {
+    protected CountDownLatch createCompletionLatch() {
         return new CountDownLatch(1);
     }
 
     @Override
     public void start() {
-        try (webCrawlerClient) {
+        try {
             this.urlQueue.put(new CrawlTask(configuration.startUrl(), 0));
             System.out.printf("Starting Crawler with %d threads.%n", configuration.threadCount());
             WebCrawlerSharedState sharedState = new WebCrawlerSharedState(urlQueue, crawledLinks, activeThreads, completionLatch);
             for (int i = 0; i < configuration.threadCount(); i++) {
-                crawlExecutor.submit(new WebCrawlerRunnable(sharedState, webCrawlerClient, analyzer, configuration));
+                crawlExecutor.submit(new WebCrawlerRunnable(sharedState, configuration));
             }
             awaitCompletion();
         } catch (InterruptedException e) {
