@@ -4,10 +4,13 @@ import org.aau.config.WebCrawlerConfiguration;
 import org.aau.crawler.concurrent.CrawlTask;
 import org.aau.crawler.concurrent.WebCrawlerRunnable;
 import org.aau.crawler.concurrent.WebCrawlerSharedState;
+import org.aau.crawler.error.CrawlingError;
 import org.aau.crawler.result.Link;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -26,6 +29,7 @@ public class WebCrawlerImpl implements WebCrawler {
     private final BlockingQueue<CrawlTask> urlQueue;
     private final AtomicInteger activeThreads = new AtomicInteger(0);
     private final CountDownLatch completionLatch;
+    private final List<CrawlingError> crawlingErrors;
 
     public WebCrawlerImpl(WebCrawlerConfiguration configuration) {
         this.configuration = configuration;
@@ -33,6 +37,7 @@ public class WebCrawlerImpl implements WebCrawler {
         this.crawledLinks = createSynchronizedLinkSet();
         this.urlQueue = createUrlQueue();
         this.completionLatch = createCompletionLatch();
+        this.crawlingErrors = createSynchronizedErrorsList();
     }
 
     protected ExecutorService createExecutorService(int threadCount) {
@@ -47,6 +52,10 @@ public class WebCrawlerImpl implements WebCrawler {
         return new LinkedBlockingQueue<>();
     }
 
+    protected List<CrawlingError> createSynchronizedErrorsList() {
+        return Collections.synchronizedList(new ArrayList<>());
+    }
+
     protected CountDownLatch createCompletionLatch() {
         return new CountDownLatch(1);
     }
@@ -56,18 +65,18 @@ public class WebCrawlerImpl implements WebCrawler {
         try {
             this.urlQueue.put(new CrawlTask(configuration.startUrl(), 0));
             System.out.printf("Starting Crawler with %d threads.%n", configuration.threadCount());
-            WebCrawlerSharedState sharedState = new WebCrawlerSharedState(urlQueue, crawledLinks, activeThreads, completionLatch);
+            WebCrawlerSharedState sharedState = new WebCrawlerSharedState(urlQueue, crawledLinks, activeThreads, completionLatch, crawlingErrors);
             for (int i = 0; i < configuration.threadCount(); i++) {
                 crawlExecutor.submit(new WebCrawlerRunnable(sharedState, configuration));
             }
             awaitCompletion();
         } catch (InterruptedException e) {
             System.err.printf("Crawler interrupted during start: %s%n", e.getMessage());
+            crawlingErrors.add(new CrawlingError("Crawler interrupted during start", e));
             Thread.currentThread().interrupt();
-            throw new RuntimeException("Crawler interrupted", e);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             System.err.printf("An unexpected error occurred during crawling: %s%n", e.getMessage());
-            throw new RuntimeException("Error during web crawling", e);
+            crawlingErrors.add(new CrawlingError("An unexpected error occurred during crawling", e));
         } finally {
             shutdownExecutor();
         }
@@ -75,7 +84,12 @@ public class WebCrawlerImpl implements WebCrawler {
 
     @Override
     public Set<Link> getCrawledLinks() {
-        return crawledLinks;
+        return Set.copyOf(crawledLinks);
+    }
+
+    @Override
+    public List<CrawlingError> getErrors() {
+        return List.copyOf(crawlingErrors);
     }
 
     @Override

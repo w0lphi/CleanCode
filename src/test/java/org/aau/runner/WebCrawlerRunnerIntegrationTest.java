@@ -25,6 +25,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertLinesMatch;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -141,7 +142,7 @@ public class WebCrawlerRunnerIntegrationTest {
 
         assertNotNull(filepath);
         verify(webCrawler).start();
-        verify(writer).writeResultsToFile(anySet(), any(OffsetDateTime.class));
+        verify(writer).writeResultsToFile(anySet(), anyList(), any(OffsetDateTime.class));
         verify(webCrawler, times(1)).getCrawledLinks();
 
         List<String> expectedLines = List.of(

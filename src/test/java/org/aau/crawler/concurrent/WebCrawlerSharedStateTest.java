@@ -1,19 +1,25 @@
 package org.aau.crawler.concurrent;
 
+import org.aau.crawler.error.CrawlingError;
 import org.aau.crawler.result.BrokenLink;
 import org.aau.crawler.result.Link;
 import org.aau.crawler.result.WorkingLink;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class WebCrawlerSharedStateTest {
 
@@ -23,8 +29,9 @@ class WebCrawlerSharedStateTest {
         Set<Link> crawled = new HashSet<>();
         AtomicInteger active = new AtomicInteger(2);
         CountDownLatch latch = new CountDownLatch(1);
+        List<CrawlingError> errors = new ArrayList<>();
 
-        WebCrawlerSharedState state = new WebCrawlerSharedState(queue, crawled, active, latch);
+        WebCrawlerSharedState state = new WebCrawlerSharedState(queue, crawled, active, latch, errors);
 
         assertSame(queue, state.urlQueue());
         assertSame(crawled, state.crawledLinks());
@@ -42,7 +49,8 @@ class WebCrawlerSharedStateTest {
                 new LinkedBlockingQueue<>(),
                 crawled,
                 new AtomicInteger(),
-                new CountDownLatch(1)
+                new CountDownLatch(1),
+                new CopyOnWriteArrayList<>()
         );
 
         assertTrue(state.containsCrawledUrl("http://example.com"));
@@ -58,7 +66,8 @@ class WebCrawlerSharedStateTest {
                 new LinkedBlockingQueue<>(),
                 crawled,
                 new AtomicInteger(),
-                new CountDownLatch(1)
+                new CountDownLatch(1),
+                new CopyOnWriteArrayList<>()
         );
 
         assertFalse(state.containsCrawledUrl("http://unknown.com"));
@@ -70,7 +79,8 @@ class WebCrawlerSharedStateTest {
                 new LinkedBlockingQueue<>(),
                 Collections.emptySet(),
                 new AtomicInteger(),
-                new CountDownLatch(1)
+                new CountDownLatch(1),
+                new CopyOnWriteArrayList<>()
         );
 
         assertFalse(state.containsCrawledUrl("http://anything.com"));

@@ -1,5 +1,6 @@
 package org.aau.writer;
 
+import org.aau.crawler.error.CrawlingError;
 import org.aau.crawler.result.BrokenLink;
 import org.aau.crawler.result.Link;
 import org.aau.crawler.result.WorkingLink;
@@ -33,6 +34,8 @@ public class MarkdownWriterIntegrationTest {
         Link workingLink = new WorkingLink("https://www.working.com", 1, headings, Set.of("Link3"));
         Link brokenLink = new BrokenLink("https://www.broken.com", 5);
         Set<Link> links = new LinkedHashSet<>(List.of(workingLink, brokenLink));
+        var crawlingError = new CrawlingError("Unexpected Error", new RuntimeException("Something went wrong"));
+        List<CrawlingError> errors = List.of(crawlingError);
         OffsetDateTime timestamp = OffsetDateTime.now();
         String expectedContent = """
                 # Crawl Results
@@ -49,9 +52,18 @@ public class MarkdownWriterIntegrationTest {
                 ## https://www.broken.com (broken)
                 Depth: 5
                 
+                # Errors
+                
+                Count: 1
+                
+                ## Error Messages
+                
+                Message: Unexpected Error
+                Cause: Something went wrong
+                
                 """.formatted(timestamp.format(DATE_TIME_FORMATTER));
 
-        Path filePath = writer.writeResultsToFile(links, timestamp);
+        Path filePath = writer.writeResultsToFile(links, errors, timestamp);
         assertEquals(expectedPath + "/report-" + timestamp.format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")) + ".md", filePath.toAbsolutePath().toString());
         assertTrue(Files.exists(filePath));
 

@@ -31,7 +31,7 @@ public class WebCrawlerRunner {
     }
 
     protected Path writeSortedCrawlerResultsToFile(WebCrawler crawler, OffsetDateTime timestamp) throws IOException {
-        return writer.writeResultsToFile(new TreeSet<>(crawler.getCrawledLinks()), timestamp);
+        return writer.writeResultsToFile(new TreeSet<>(crawler.getCrawledLinks()), crawler.getErrors(), timestamp);
     }
 
     protected WebCrawler createCrawler(WebCrawlerConfiguration configuration) {

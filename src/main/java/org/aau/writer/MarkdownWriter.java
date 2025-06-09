@@ -1,5 +1,6 @@
 package org.aau.writer;
 
+import org.aau.crawler.error.CrawlingError;
 import org.aau.crawler.result.Link;
 
 import java.io.IOException;
@@ -21,13 +22,20 @@ public class MarkdownWriter {
         this.outputDir = outputDir;
     }
 
-    public Path writeResultsToFile(Set<Link> links, OffsetDateTime timestamp) throws IOException {
+    public Path writeResultsToFile(Set<Link> links, List<CrawlingError> errors, OffsetDateTime timestamp) throws IOException {
         String filename = "report-" + timestamp.format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")) + ".md";
         Path path = Paths.get(outputDir, filename);
         List<String> lines = new ArrayList<>();
         lines.add("# Crawl Results\n");
         lines.add("Timestamp: " + timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "\n");
         links.stream().map(Link::toMarkdownString).forEach(lines::add);
+
+        if (errors != null && !errors.isEmpty()) {
+            lines.add("# Errors\n");
+            lines.add("Count: " + errors.size() + "\n");
+            lines.add("## Error Messages\n");
+            errors.stream().map(CrawlingError::toMarkdownString).forEach(lines::add);
+        }
         Files.createDirectories(path.getParent());
         return Files.write(path, lines, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     }

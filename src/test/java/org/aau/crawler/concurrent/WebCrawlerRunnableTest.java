@@ -4,21 +4,30 @@ import org.aau.config.DomainFilter;
 import org.aau.config.WebCrawlerConfiguration;
 import org.aau.crawler.analyzer.PageAnalyzer;
 import org.aau.crawler.client.WebCrawlerClient;
+import org.aau.crawler.error.CrawlingError;
 import org.aau.crawler.result.BrokenLink;
 import org.aau.crawler.result.Link;
 import org.aau.crawler.result.WorkingLink;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class WebCrawlerRunnableTest {
 
@@ -32,7 +41,8 @@ class WebCrawlerRunnableTest {
     void setup() {
         BlockingQueue<CrawlTask> queue = new LinkedBlockingQueue<>();
         Set<Link> crawledLinks = new HashSet<>();
-        sharedState = new WebCrawlerSharedState(queue, crawledLinks, new AtomicInteger(), new CountDownLatch(1));
+        List<CrawlingError> errors = Collections.synchronizedList(new ArrayList<>());
+        sharedState = new WebCrawlerSharedState(queue, crawledLinks, new AtomicInteger(), new CountDownLatch(1), errors);
 
         config = new WebCrawlerConfiguration(
                 "http://example.com",
@@ -99,4 +109,5 @@ class WebCrawlerRunnableTest {
         assertEquals("http://example.com/page1", task.url());
         assertEquals(1, task.depth());
     }
+
 }

@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -92,14 +93,14 @@ public class WebCrawlerRunnerUnitTest {
         var webCrawlerRunner = createWebCrawlerRunner(true);
         webCrawlerRunner.run();
         verify(crawlerMock).start();
-        verify(writerMock).writeResultsToFile(eq(links), any(OffsetDateTime.class));
+        verify(writerMock).writeResultsToFile(eq(links), anyList(), any(OffsetDateTime.class));
         verify(crawlerMock).getCrawledLinks();
     }
 
     @Test
     void runShouldThrowRuntimeExceptionIfWritingFails() throws IOException {
         var ioException = new IOException("Test Exception");
-        when(writerMock.writeResultsToFile(anySet(), any(OffsetDateTime.class))).thenThrow(ioException);
+        when(writerMock.writeResultsToFile(anySet(), anyList(), any(OffsetDateTime.class))).thenThrow(ioException);
 
         var webCrawlerRunner = createWebCrawlerRunner(true);
 

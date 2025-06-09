@@ -2,23 +2,19 @@ package org.aau.crawler;
 
 import org.aau.config.DomainFilter;
 import org.aau.config.WebCrawlerConfiguration;
-import org.aau.crawler.analyzer.PageAnalyzer;
-import org.aau.crawler.client.WebCrawlerClient;
+import org.aau.crawler.error.CrawlingError;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class WebCrawlerImplUnitTest {
@@ -38,7 +34,7 @@ public class WebCrawlerImplUnitTest {
                 domainFilter,
                 ""
         );
-        var webCrawlerImpl = new WebCrawlerImpl(configuration){
+        var webCrawlerImpl = new WebCrawlerImpl(configuration) {
             @Override
             protected ExecutorService createExecutorService(int threadCount) {
                 return executorServiceMock;
@@ -48,13 +44,19 @@ public class WebCrawlerImplUnitTest {
     }
 
     @Test
-    void startShouldThrowRuntimeExceptionOnError() throws Exception {
+    void startShouldReportRuntimeExceptionOnError() {
         var exception = new NullPointerException("Test exception");
-       when(executorServiceMock.submit(any(Runnable.class))).thenThrow(exception);
+        when(executorServiceMock.submit(any(Runnable.class))).thenThrow(exception);
 
-        RuntimeException re = assertThrows(RuntimeException.class, () -> webCrawler.start());
-        assertEquals(exception, re.getCause());
-        verify(webCrawler).start();
+        assertDoesNotThrow(() -> webCrawler.start());
+
+        List<CrawlingError> errors = webCrawler.getErrors();
+        assertEquals(1, errors.size());
+        assertEquals(exception, errors.getFirst().cause());
+    }
+
+    void startShouldReportInterruptedExceptionOnError() {
+
     }
 
 }
