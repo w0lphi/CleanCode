@@ -58,8 +58,8 @@ public class MarkdownWriterIntegrationTest {
                 
                 ## Error Messages
                 
-                Message: Unexpected Error
-                Cause: Something went wrong
+                **Message**: Unexpected Error\s\s
+                **Cause**: Something went wrong [RuntimeException]\s\s
                 
                 """.formatted(timestamp.format(DATE_TIME_FORMATTER));
 

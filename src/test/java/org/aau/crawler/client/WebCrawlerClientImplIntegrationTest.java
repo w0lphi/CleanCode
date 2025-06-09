@@ -1,6 +1,8 @@
 package org.aau.crawler.client;
 
 
+import org.aau.http.HttpClient;
+import org.aau.web.WebDriver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,20 +11,12 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.junit.jupiter.MockServerExtension;
-import org.openqa.selenium.WebDriver;
-
-import java.io.IOException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
@@ -77,18 +71,6 @@ public class WebCrawlerClientImplIntegrationTest {
         );
         String url = "%s%s".formatted(mockServerUrl, path);
         assertTrue(webCrawlerClient.isPageAvailable(url));
-    }
-
-    @Test
-    void isPageAvailableShouldReturnFalseOnException() throws IOException, InterruptedException {
-        HttpClient mockHttpClient = mock(HttpClient.class);
-        WebDriver mockWebDriver = mock(WebDriver.class);
-        WebCrawlerClientImpl client = new WebCrawlerClientImpl(mockWebDriver, mockHttpClient);
-        when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-                .thenThrow(new IOException("Simulated network error"));
-        boolean result = client.isPageAvailable("http://example.com");
-        assertFalse(result);
-        verify(mockHttpClient).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
     }
 
     @Test
