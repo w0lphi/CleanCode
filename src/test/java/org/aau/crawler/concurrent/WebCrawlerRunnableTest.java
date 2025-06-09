@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -109,5 +110,23 @@ class WebCrawlerRunnableTest {
         assertEquals("http://example.com/page1", task.url());
         assertEquals(1, task.depth());
     }
+
+    @Test
+    void testRunCompletesWhenQueueEmptyAndNoActiveThreads() throws InterruptedException {
+        sharedState.urlQueue().put(new CrawlTask("http://example.com", 0));
+
+        when(mockClient.isPageAvailable("http://example.com")).thenReturn(false);
+
+        Thread thread = new Thread(runnable);
+        thread.start();
+
+        boolean completed = sharedState.completionLatch().await(10, TimeUnit.SECONDS);
+
+        assertTrue(completed, "Crawler thread did not complete in time");
+        assertTrue(sharedState.urlQueue().isEmpty(), "Queue should be empty");
+        assertEquals(0, sharedState.activeThreads().get(), "No active threads should remain");
+    }
+
+
 
 }
