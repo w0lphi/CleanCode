@@ -6,7 +6,7 @@ import java.net.http.HttpResponse;
 
 public class HttpClientImpl implements HttpClient {
 
-    private java.net.http.HttpClient httpClient;
+    private final java.net.http.HttpClient httpClient;
 
     public HttpClientImpl() {
         this.httpClient = createHttpClient();
