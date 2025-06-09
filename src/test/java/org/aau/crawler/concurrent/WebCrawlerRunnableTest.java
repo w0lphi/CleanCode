@@ -10,6 +10,9 @@ import org.aau.crawler.result.Link;
 import org.aau.crawler.result.WorkingLink;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,13 +24,25 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 class WebCrawlerRunnableTest {
@@ -43,20 +58,20 @@ class WebCrawlerRunnableTest {
         BlockingQueue<CrawlTask> queue = new LinkedBlockingQueue<>();
         Set<Link> crawledLinks = new HashSet<>();
         List<CrawlingError> errors = Collections.synchronizedList(new ArrayList<>());
-        sharedState = new WebCrawlerSharedState(queue, crawledLinks, new AtomicInteger(), new CountDownLatch(1), errors);
+        sharedState = spy(new WebCrawlerSharedState(queue, crawledLinks, new AtomicInteger(), new CountDownLatch(1), errors));
 
-        config = new WebCrawlerConfiguration(
+        config = spy(new WebCrawlerConfiguration(
                 "http://example.com",
                 2,
                 1,
                 new DomainFilter(Set.of("example.com")),
                 "/output"
-        );
+        ));
 
         mockClient = mock(WebCrawlerClient.class);
         mockAnalyzer = mock(PageAnalyzer.class);
 
-        runnable = new WebCrawlerRunnable(sharedState, config) {
+        runnable = spy(new WebCrawlerRunnable(sharedState, config) {
             @Override
             protected WebCrawlerClient createWebCrawlerClient() {
                 return mockClient;
@@ -66,7 +81,7 @@ class WebCrawlerRunnableTest {
             protected PageAnalyzer createPageAnalyzer() {
                 return mockAnalyzer;
             }
-        };
+        });
     }
 
     @Test
@@ -128,5 +143,113 @@ class WebCrawlerRunnableTest {
     }
 
 
+    @Test
+    void runShouldReportException() throws Exception {
+        var exception = new Exception("Test exception");
+        doThrow(exception).when(mockClient).close();
+        doNothing().when(runnable).processCrawlTasks();
+        assertDoesNotThrow(() -> runnable.run());
+
+        assertEquals(1, sharedState.crawlingErrors().size());
+        assertEquals(exception, sharedState.crawlingErrors().getFirst().cause());
+        verify(runnable).reportError(anyString(), eq(exception));
+    }
+
+    @Test
+    void processCrawlTasksShouldReportInterruptedException() throws InterruptedException {
+        var ie = new InterruptedException("Test interruption");
+        doThrow(ie).when(sharedState).getNextTask();
+
+        assertDoesNotThrow(() -> runnable.processCrawlTasks());
+
+        assertTrue(Thread.currentThread().isInterrupted());
+        assertEquals(1, sharedState.crawlingErrors().size());
+        assertEquals(ie, sharedState.crawlingErrors().getFirst().cause());
+        verify(runnable).reportError(anyString(), eq(ie));
+        verify(sharedState).getNextTask();
+    }
+
+    @Test
+    void crawlLinkShouldDoNothingIfShouldCrawlReturnsFalse() {
+        String url = "http://example.com";
+        int depth = 1;
+        doReturn(false).when(runnable).shouldCrawl(url, depth);
+        runnable.crawlLink(url, depth);
+
+        verify(runnable).shouldCrawl(url, depth);
+        verify(mockClient, never()).isPageAvailable(url);
+    }
+
+    @Test
+    void crawlLinkShouldReportRuntimeExceptionAndAddBrokenLink() {
+        String url = "http://example.com";
+        var exception = new RuntimeException("Test exception");
+        doReturn(true).when(runnable).shouldCrawl(url, 0);
+        doReturn(true).when(mockClient).isPageAvailable(url);
+        doThrow(exception).when(mockClient).getPageContent(url);
+
+        assertDoesNotThrow(() -> runnable.crawlLink(url, 0));
+
+        assertEquals(1, sharedState.crawlingErrors().size());
+        assertEquals(exception, sharedState.crawlingErrors().getFirst().cause());
+
+        assertEquals(1, sharedState.crawledLinks().size());
+        Link crawledLink = sharedState.crawledLinks().iterator().next();
+        assertEquals(BrokenLink.class, crawledLink.getClass());
+        assertEquals(url, crawledLink.getUrl());
+
+        verify(mockClient).getPageContent(url);
+        verify(runnable).reportError(anyString(), eq(exception));
+    }
+
+    @Test
+    void reportSublinksShouldReportInterruptedException() throws InterruptedException {
+        String url = "http://example.com";
+        var ie = new InterruptedException("Test interruption");
+        doThrow(ie).when(sharedState).addTask(any(CrawlTask.class));
+        doReturn(false).when(runnable).isAlreadyCrawledUrl(url);
+
+        assertDoesNotThrow(() -> runnable.reportSublinks(Set.of(url), 0));
+
+        assertTrue(Thread.currentThread().isInterrupted());
+        assertEquals(1, sharedState.crawlingErrors().size());
+        assertEquals(ie, sharedState.crawlingErrors().getFirst().cause());
+        verify(runnable).reportError(anyString(), eq(ie));
+        verify(sharedState).addTask(any(CrawlTask.class));
+    }
+
+    @Test
+    void processCrawlTasksShouldContinueAsLongAsThereAreTasksOrActiveThreads() throws InterruptedException {
+        doReturn(null).when(sharedState).getNextTask();
+        doReturn(true).when(sharedState).hasNoFurtherTasks();
+        when(sharedState.hasActiveThreads()).thenReturn(true).thenReturn(false);
+
+        runnable.processCrawlTasks();
+
+        verify(sharedState, times(2)).getNextTask();
+        verify(sharedState, times(2)).hasActiveThreads();
+        verify(sharedState).hasNoFurtherTasks();
+        verify(sharedState).countDownCompletionLatch();
+        verifyNoMoreInteractions(sharedState);
+    }
+
+    @ParameterizedTest
+    @MethodSource("shouldCrawlArguments")
+    void testShouldCrawlLink(int depth, boolean isAllowedDomain, boolean isAlreadyCrawledUrl, boolean expectedValue) {
+        String url = "http://example.com";
+        doReturn(isAllowedDomain).when(config).isAllowedDomain(url);
+        doReturn(isAlreadyCrawledUrl).when(runnable).isAlreadyCrawledUrl(url);
+
+        assertEquals(expectedValue, runnable.shouldCrawl(url, depth));
+    }
+
+    static Stream<Arguments> shouldCrawlArguments() {
+        return Stream.of(
+                Arguments.of(3, false, true, false),
+                Arguments.of(0, false, true, false),
+                Arguments.of(0, true, true, false),
+                Arguments.of(0, true, false, true)
+        );
+    }
 
 }

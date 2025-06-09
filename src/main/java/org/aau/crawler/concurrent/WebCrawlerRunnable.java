@@ -11,7 +11,6 @@ import org.aau.crawler.result.BrokenLink;
 import org.aau.crawler.result.WorkingLink;
 
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 public class WebCrawlerRunnable implements Runnable {
 
@@ -44,18 +43,18 @@ public class WebCrawlerRunnable implements Runnable {
             CrawlTask task = null;
             try {
                 System.out.printf("WebCrawler thread %s trying to fetch task... %n", Thread.currentThread().getName());
-                task = sharedState.urlQueue().poll(5, TimeUnit.SECONDS);
+                task = sharedState.getNextTask();
                 if (task == null) {
-                    if (sharedState.activeThreads().get() == 0 && sharedState.urlQueue().isEmpty()) {
+                    if (!sharedState.hasActiveThreads() && sharedState.hasNoFurtherTasks()) {
                         System.out.printf("WebCrawler thread %s: No further tasks and no active threads, finishing job...%n", Thread.currentThread().getName());
-                        sharedState.completionLatch().countDown();
+                        sharedState.countDownCompletionLatch();
                         break;
                     }
                     continue;
                 }
 
                 System.out.printf("WebCrawler thread %s fetched task: %s%n", Thread.currentThread().getName(), task);
-                sharedState.activeThreads().incrementAndGet();
+                sharedState.incrementActiveThreads();
                 crawlLink(task.url(), task.depth());
 
             } catch (InterruptedException e) {
@@ -65,7 +64,7 @@ public class WebCrawlerRunnable implements Runnable {
                 break;
             } finally {
                 if (task != null) {
-                    sharedState.activeThreads().decrementAndGet();
+                    sharedState.decrementActiveThreads();
                 }
             }
         }
@@ -81,16 +80,16 @@ public class WebCrawlerRunnable implements Runnable {
             try {
                 String html = webCrawlerClient.getPageContent(url);
                 WorkingLink link = analyzer.analyze(url, depth, html);
-                sharedState.crawledLinks().add(link);
+                sharedState.addCrawledLink(link);
                 reportSublinks(link.getSubLinks(), depth);
                 System.out.printf("WebCrawler thread %s successfully crawled link %s %n", Thread.currentThread().getName(), url);
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
                 System.err.printf("%s: Unexpected error while crawling %s, reporting broken link: %s%n", Thread.currentThread().getName(), url, e.getMessage());
                 reportError("Unexpected error while crawling %s, reporting broken link".formatted(url), e);
-                sharedState.crawledLinks().add(new BrokenLink(url, depth));
+                sharedState.addCrawledLink(new BrokenLink(url, depth));
             }
         } else {
-            sharedState.crawledLinks().add(new BrokenLink(url, depth));
+            sharedState.addCrawledLink(new BrokenLink(url, depth));
         }
     }
 
@@ -102,7 +101,7 @@ public class WebCrawlerRunnable implements Runnable {
         subLinks.forEach(sub -> {
             try {
                 if (depth + 1 <= configuration.maximumDepth() && !isAlreadyCrawledUrl(sub)) {
-                    sharedState.urlQueue().put(new CrawlTask(sub, depth + 1));
+                    sharedState.addTask(new CrawlTask(sub, depth + 1));
                 }
             } catch (InterruptedException e) {
                 System.err.printf("Web Crawler thread %s was interrupted while reporting sublinks: %s%n", Thread.currentThread().getName(), e.getMessage());
@@ -126,6 +125,6 @@ public class WebCrawlerRunnable implements Runnable {
 
     protected void reportError(String message, Throwable e) {
         var crawlingError = new CrawlingError(message, e);
-        sharedState.crawlingErrors().add(crawlingError);
+        sharedState.reportCrawlingError(crawlingError);
     }
 }
