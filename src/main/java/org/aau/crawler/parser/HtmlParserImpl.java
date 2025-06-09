@@ -30,7 +30,7 @@ public class HtmlParserImpl implements HtmlParser {
         Elements links = htmlDocument.select("a[href]");
         Set<String> linkSet = new LinkedHashSet<>();
         for (Element link : links) {
-            linkSet.add(link.attr("href"));
+            linkSet.add(link.attr("abs:href"));
         }
         return linkSet;
     }
