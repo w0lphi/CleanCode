@@ -69,4 +69,13 @@ class DomainFilterTest {
         DomainFilter filter = new DomainFilter(setWithNull);
         assertFalse(filter.isAllowedDomain("http://example.com"));
     }
+
+    @Test
+    void testNormalizeDomain() {
+        DomainFilter filter = new DomainFilter(Set.of("https://example.com", "https://test.com", "http://mytest.com"));
+        assertTrue(filter.isAllowedDomain("https://at.example.com"));
+        assertTrue(filter.isAllowedDomain("https://sub.test.com"));
+        assertTrue(filter.isAllowedDomain("http://de.mytest.com"));
+        assertFalse(filter.isAllowedDomain("http://mytest1.com"));
+    }
 }

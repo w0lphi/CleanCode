@@ -1,9 +1,7 @@
 package org.aau.config;
 
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -24,7 +22,7 @@ public class DomainFilter {
             return null;
         }
         domain = domain.toLowerCase().trim();
-        if (domain.startsWith("www.") || domain.startsWith("http://") || domain.startsWith("https://")) {
+        if (domain.startsWith("http://") || domain.startsWith("https://")) {
             return getDomainFromUrl(domain);
         }
 
