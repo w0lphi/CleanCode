@@ -7,7 +7,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DomainFilterTest {
 
@@ -63,11 +66,9 @@ class DomainFilterTest {
     }
 
     @Test
-    void testNormalizeNullDomain() {
-        Set<String> setWithNull = new HashSet<>();
-        setWithNull.add(null);
-        DomainFilter filter = new DomainFilter(setWithNull);
-        assertFalse(filter.isAllowedDomain("http://example.com"));
+    void isAllowedDomainShouldReturnTrueForEmptyAllowedDomains() {
+        DomainFilter filter = new DomainFilter(Collections.emptySet());
+        assertTrue(filter.isAllowedDomain("http://example.com"));
     }
 
     @Test
@@ -77,5 +78,15 @@ class DomainFilterTest {
         assertTrue(filter.isAllowedDomain("https://sub.test.com"));
         assertTrue(filter.isAllowedDomain("http://de.mytest.com"));
         assertFalse(filter.isAllowedDomain("http://mytest1.com"));
+    }
+
+    @Test
+    void domainFilterShouldRemoveNullDomains() {
+        Set<String> allowedDomains = new HashSet<>();
+        allowedDomains.add("example.com");
+        allowedDomains.add(null);
+        DomainFilter filter = new DomainFilter(allowedDomains);
+        assertEquals(1, filter.getAllowedDomains().size());
+        assertTrue(filter.getAllowedDomains().contains("example.com"));
     }
 }

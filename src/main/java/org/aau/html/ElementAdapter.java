@@ -1,4 +1,4 @@
-package org.aau.crawler.parser.jsoupadapter;
+package org.aau.html;
 
 public class ElementAdapter implements Element {
     private final org.jsoup.nodes.Element element;

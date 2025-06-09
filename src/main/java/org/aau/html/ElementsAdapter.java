@@ -1,9 +1,10 @@
-package org.aau.crawler.parser.jsoupadapter;
+package org.aau.html;
 
 import org.jsoup.select.Elements;
+
 import java.util.Iterator;
 
-public class ElementsAdapter implements org.aau.crawler.parser.jsoupadapter.Elements {
+public class ElementsAdapter implements org.aau.html.Elements {
     private final Elements elements;
 
     public ElementsAdapter(Elements elements) {
@@ -16,12 +17,12 @@ public class ElementsAdapter implements org.aau.crawler.parser.jsoupadapter.Elem
     }
 
     @Override
-    public org.aau.crawler.parser.jsoupadapter.Element get(int index) {
+    public Element get(int index) {
         return new ElementAdapter(elements.get(index));
     }
 
     @Override
-    public Iterator<org.aau.crawler.parser.jsoupadapter.Element> iterator() {
+    public Iterator<Element> iterator() {
         return new Iterator<>() {
             private final Iterator<org.jsoup.nodes.Element> jsoupIterator = elements.iterator();
 
@@ -31,7 +32,7 @@ public class ElementsAdapter implements org.aau.crawler.parser.jsoupadapter.Elem
             }
 
             @Override
-            public org.aau.crawler.parser.jsoupadapter.Element next() {
+            public Element next() {
                 return new ElementAdapter(jsoupIterator.next());
             }
         };

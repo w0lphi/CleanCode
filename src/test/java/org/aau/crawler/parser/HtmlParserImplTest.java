@@ -1,13 +1,14 @@
 package org.aau.crawler.parser;
 
-import org.aau.crawler.parser.jsoupadapter.Document;
-import org.aau.crawler.parser.jsoupadapter.DocumentAdapter;
-import org.jsoup.Jsoup;
+
+import org.aau.html.Document;
+import org.aau.html.DocumentAdapter;
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class HtmlParserImplTest {
 
@@ -16,7 +17,7 @@ public class HtmlParserImplTest {
     @Test
     void extractHeadings_shouldReturnFormattedHeadings() {
         String html = "<h1>Main Title</h1><h2>Sub Title</h2><h5>Deep Title</h5>";
-        Document doc = new DocumentAdapter(Jsoup.parse(html));
+        Document doc = new DocumentAdapter(html);
 
         Set<String> headings = parser.extractHeadings(doc);
 
@@ -29,7 +30,7 @@ public class HtmlParserImplTest {
     @Test
     void extractLinks_shouldReturnAbsoluteUrls() {
         String html = "<a href='https://www.example.com'>Link 1</a><a href='https://www.example.org'>Link 2</a>";
-        Document doc = new DocumentAdapter(Jsoup.parse(html));
+        Document doc = new DocumentAdapter(html);
 
         Set<String> links = parser.extractLinks(doc);
 

@@ -1,10 +1,16 @@
-package org.aau.crawler.parser.jsoupadapter;
+package org.aau.html;
+
+import org.jsoup.Jsoup;
 
 public class DocumentAdapter implements Document {
     private final org.jsoup.nodes.Document document;
 
-    public DocumentAdapter(org.jsoup.nodes.Document document) {
-        this.document = document;
+    public DocumentAdapter(String html, String url) {
+        this.document = Jsoup.parse(html, url);
+    }
+
+    public DocumentAdapter(String html) {
+        this.document = Jsoup.parse(html);
     }
 
     @Override

@@ -1,11 +1,14 @@
-package org.aau.crawler.parser.jsoupadapter;
+package org.aau.crawler.parser.html;
 
+import org.aau.html.Element;
+import org.aau.html.ElementsAdapter;
 import org.jsoup.Jsoup;
 import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class ElementsAdapterTest {
 
