@@ -106,6 +106,7 @@ public class WebCrawlerImpl implements WebCrawler {
             }
         } catch (InterruptedException ie) {
             System.err.printf("Error while shutting down crawl executor: %s %n", ie.getMessage());
+            crawlingErrors.add(new CrawlingError("Error while shutting down crawl executor", ie));
             crawlExecutor.shutdownNow();
             Thread.currentThread().interrupt();
         }

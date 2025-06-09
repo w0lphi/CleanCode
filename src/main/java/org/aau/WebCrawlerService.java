@@ -30,14 +30,22 @@ public class WebCrawlerService {
             maximumDepth = Integer.parseInt(args[1]);
         } catch (NumberFormatException e) {
             System.err.printf("Error when parsing maximum depth: %s\n", e.getMessage());
-            throw new NumberFormatException("Input is not a valid number!");
+            throw new NumberFormatException("Maximum depth is not a valid number!");
         }
 
         if (maximumDepth < 0) {
             throw new NumberFormatException("Maximum depth cannot be negative");
         }
 
-        int threadCount = (args.length > 2) ? Integer.parseInt(args[2]) : 1;
+        int threadCount = 1;
+        if (args.length > 2) {
+            try {
+                threadCount = Integer.parseInt(args[2]);
+            } catch (NumberFormatException e) {
+                System.err.printf("Error when parsing thread count: %s\n", e.getMessage());
+                throw new NumberFormatException("Thead count is not a valid number!");
+            }
+        }
 
         if (threadCount < 1) {
             throw new NumberFormatException("Thread count cannot be less than 1");

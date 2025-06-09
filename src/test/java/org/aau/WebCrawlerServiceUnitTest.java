@@ -77,6 +77,26 @@ public class WebCrawlerServiceUnitTest {
     }
 
     @Test
+    void mainShouldThrowExceptionIfThreadCountIsLessThanOne() {
+        String[] args = new String[3];
+        args[0] = "http://example.com";
+        args[1] = "1";
+        args[2] = "0";
+
+        assertThrows(NumberFormatException.class, () -> WebCrawlerService.main(args));
+    }
+
+    @Test
+    void mainShouldThrowExceptionIfThreadCountIsNaN() {
+        String[] args = new String[3];
+        args[0] = "http://example.com";
+        args[1] = "1";
+        args[2] = "null";
+
+        assertThrows(NumberFormatException.class, () -> WebCrawlerService.main(args));
+    }
+
+    @Test
     void executeShouldThrowExceptionIfCrawlFails() {
         RuntimeException exception = new RuntimeException("Test exception");
         when(webCrawlerRunnerMock.run()).thenThrow(exception);
