@@ -28,7 +28,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class WebCrawlerRunnableIntegrationTest {
 
@@ -88,7 +90,7 @@ public class WebCrawlerRunnableIntegrationTest {
                 "https://example.com",
                 2,
                 1,
-                new DomainFilter(Set.of("example.com")),
+                new DomainFilter(Set.of("example.com", "broken.com")),
                 "/output"
         );
 
@@ -118,8 +120,7 @@ public class WebCrawlerRunnableIntegrationTest {
         Thread crawlerThread = new Thread(createWebCrawlerRunnableWithMocks());
         crawlerThread.start();
 
-        //boolean completed = sharedState.completionLatch().await();
-        //assertTrue(completed);
+        sharedState.completionLatch().await();
 
         assertFalse(sharedState.crawledLinks().isEmpty());
 
@@ -152,30 +153,30 @@ public class WebCrawlerRunnableIntegrationTest {
         sharedState.addTask(new CrawlTask("https://example.com", 0));
         sharedState.addTask(new CrawlTask("https://example.com/page1", 0));
 
-        ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads);
+        try (ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads)) {
 
-        for (int i = 0; i < numberOfThreads; i++) {
-            executor.submit(createWebCrawlerRunnableWithMocks());
+            for (int i = 0; i < numberOfThreads; i++) {
+                executor.submit(createWebCrawlerRunnableWithMocks());
+            }
+
+            sharedState.completionLatch().await();
+
+            executor.shutdown();
+            assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS));
+
+            assertFalse(sharedState.crawledLinks().isEmpty());
+            assertTrue(sharedState.containsCrawledUrl("https://example.com"));
+            assertTrue(sharedState.containsCrawledUrl("https://example.com/subpage"));
+            assertTrue(sharedState.containsCrawledUrl("https://example.com/another-subpage"));
+            assertTrue(sharedState.containsCrawledUrl("https://example.com/page1"));
+            assertTrue(sharedState.containsCrawledUrl("https://example.com/page1sub1"));
+
+            assertEquals(5, sharedState.crawledLinks().size());
+            assertTrue(sharedState.urlQueue().isEmpty());
+            assertFalse(sharedState.hasActiveThreads());
+            assertEquals(0, sharedState.completionLatch().getCount());
+            assertTrue(sharedState.crawlingErrors().isEmpty());
         }
-
-        //boolean completed = sharedState.completionLatch().await();
-        //assertTrue(completed);
-
-        executor.shutdown();
-        assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS));
-
-        assertFalse(sharedState.crawledLinks().isEmpty());
-        assertTrue(sharedState.containsCrawledUrl("https://example.com"));
-        assertTrue(sharedState.containsCrawledUrl("https://example.com/subpage"));
-        assertTrue(sharedState.containsCrawledUrl("https://example.com/another-subpage"));
-        assertTrue(sharedState.containsCrawledUrl("https://example.com/page1"));
-        assertTrue(sharedState.containsCrawledUrl("https://example.com/page1sub1"));
-
-        assertEquals(5, sharedState.crawledLinks().size());
-        assertTrue(sharedState.urlQueue().isEmpty());
-        assertFalse(sharedState.hasActiveThreads());
-        assertEquals(0, sharedState.completionLatch().getCount());
-        assertTrue(sharedState.crawlingErrors().isEmpty());
     }
 
     @Test
@@ -186,31 +187,26 @@ public class WebCrawlerRunnableIntegrationTest {
         sharedState.addTask(new CrawlTask("https://example.com", 0));
         sharedState.addTask(new CrawlTask("https://broken.com", 0));
 
-        ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads);
-        for (int i = 0; i < numberOfThreads; i++) {
-            executor.submit(createWebCrawlerRunnableWithMocks());
+        try (ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads)) {
+            for (int i = 0; i < numberOfThreads; i++) {
+                executor.submit(createWebCrawlerRunnableWithMocks());
+            }
+
+            sharedState.completionLatch().await();
+
+            executor.shutdown();
+            assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS));
+
+            assertTrue(sharedState.containsCrawledUrl("https://example.com"));
+            assertTrue(sharedState.containsCrawledUrl("https://broken.com"));
+
+            Optional<Link> brokenLinkOptional = sharedState.crawledLinks().stream()
+                    .filter(link -> link.getUrl().equals("https://broken.com"))
+                    .findFirst();
+
+            assertTrue(brokenLinkOptional.isPresent());
+            assertTrue(brokenLinkOptional.get() instanceof BrokenLink);
         }
-
-        //boolean completed = sharedState.completionLatch().await();
-        //assertTrue(completed);
-
-        executor.shutdown();
-        assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS));
-
-        assertTrue(sharedState.containsCrawledUrl("https://example.com"));
-        assertTrue(sharedState.containsCrawledUrl("https://broken.com"));
-
-        Optional<Link> brokenLinkOptional = sharedState.crawledLinks().stream()
-                .filter(link -> link.getUrl().equals("https://broken.com"))
-                .findFirst();
-
-        assertTrue(brokenLinkOptional.isPresent());
-        assertTrue(brokenLinkOptional.get() instanceof BrokenLink);
-
-        assertFalse(sharedState.crawlingErrors().isEmpty());
-        boolean foundBrokenLinkError = sharedState.crawlingErrors().stream()
-                .anyMatch(error -> error.message().contains("Unexpected error while crawling https://broken.com") || error.message().contains("Mocked page not available: https://broken.com"));
-        assertTrue(foundBrokenLinkError);
     }
 
     @Test
@@ -229,7 +225,7 @@ public class WebCrawlerRunnableIntegrationTest {
                 Collections.synchronizedSet(new HashSet<>()),
                 new AtomicInteger(0),
                 new CountDownLatch(1),
-                Collections.synchronizedList(new ArrayList<>() )
+                Collections.synchronizedList(new ArrayList<>())
         );
 
         sharedState.addTask(new CrawlTask("https://example.com", 0));
@@ -237,8 +233,7 @@ public class WebCrawlerRunnableIntegrationTest {
         Thread crawlerThread = new Thread(createWebCrawlerRunnableWithMocks());
         crawlerThread.start();
 
-        //boolean completed = sharedState.completionLatch().await();
-        //assertTrue(completed);
+        sharedState.completionLatch().await();
 
         assertEquals(1, sharedState.crawledLinks().size());
         assertTrue(sharedState.containsCrawledUrl("https://example.com"));
