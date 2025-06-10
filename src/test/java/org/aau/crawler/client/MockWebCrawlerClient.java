@@ -18,13 +18,12 @@ public class MockWebCrawlerClient implements WebCrawlerClient {
 
     @Override
     public String getPageContent(String url) throws RuntimeException {
-        if (!isPageAvailable(url)) {
+        if (url.contains("broken")) {
             throw new RuntimeException("Mocked page not available: " + url);
         }
         return pageContents.getOrDefault(url, "<html><body>Default mocked content for " + url + "</body></html>");
     }
 
     @Override
-    public void close() {
-    }
+    public void close() {}
 }

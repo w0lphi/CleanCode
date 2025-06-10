@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class WebCrawlerRunnableIntegrationTest {
 
     private static final Map<String, String> MOCK_PAGE_CONTENTS = Map.of(
-            "https://example.com", "<html><body><h1>Mock Heading 1</h1><a href=\"https://example.com/subpage\">Sub Page</a><a href=\"https://another.com/external\">External Link</a></body></html>",
+            "https://example.com", "<html><body><h1>Mock Heading 1</h1><a href=\"https://example.com/subpage\">Sub Page</a><a href=\"https://another.com/external\">External Link</a><a href=\"https://example.com/unavailable\">Unavailable Link</a></body></html>",
             "https://example.com/subpage", "<html><body><h2>Sub Page Heading</h2><a href=\"https://example.com/another-subpage\">Another Sub Page</a></body></html>",
             "https://example.com/another-subpage", "<html><body><h3>Deep Page Heading</h3></body></html>",
             "https://example.com/page1", "<html><body><h1>Page1 Heading</h1><a href=\"https://example.com/page1sub1\">Page1 Sublink 1</a></body></html>",
@@ -48,13 +48,14 @@ public class WebCrawlerRunnableIntegrationTest {
             "https://example.com/subpage", true,
             "https://example.com/another-subpage", true,
             "https://another.com/external", true,
-            "https://broken.com", false,
+            "https://broken.com", true,
+            "https://example.com/unavailable", false,
             "https://example.com/page1", true,
             "https://example.com/page1sub1", true
     );
 
     private static final Map<String, Set<String>> MOCK_EXTRACTED_LINKS = Map.of(
-            "https://example.com", Set.of("https://example.com/subpage", "https://another.com/external"),
+            "https://example.com", Set.of("https://example.com/subpage", "https://another.com/external", "https://example.com/unavailable"),
             "https://example.com/subpage", Set.of("https://example.com/another-subpage"),
             "https://example.com/another-subpage", Collections.emptySet(),
             "https://example.com/page1", Set.of("https://example.com/page1sub1"),
@@ -89,7 +90,7 @@ public class WebCrawlerRunnableIntegrationTest {
         configuration = new WebCrawlerConfiguration(
                 "https://example.com",
                 2,
-                1,
+                2,
                 new DomainFilter(Set.of("example.com", "broken.com")),
                 "/output"
         );
@@ -170,8 +171,9 @@ public class WebCrawlerRunnableIntegrationTest {
             assertTrue(sharedState.containsCrawledUrl("https://example.com/another-subpage"));
             assertTrue(sharedState.containsCrawledUrl("https://example.com/page1"));
             assertTrue(sharedState.containsCrawledUrl("https://example.com/page1sub1"));
+            assertTrue(sharedState.containsCrawledUrl("https://example.com/unavailable"));
 
-            assertEquals(5, sharedState.crawledLinks().size());
+            assertEquals(6, sharedState.crawledLinks().size());
             assertTrue(sharedState.urlQueue().isEmpty());
             assertFalse(sharedState.hasActiveThreads());
             assertEquals(0, sharedState.completionLatch().getCount());
@@ -206,6 +208,12 @@ public class WebCrawlerRunnableIntegrationTest {
 
             assertTrue(brokenLinkOptional.isPresent());
             assertTrue(brokenLinkOptional.get() instanceof BrokenLink);
+
+            assertFalse(sharedState.crawlingErrors().isEmpty());
+            boolean foundBrokenLinkError = sharedState.crawlingErrors().stream()
+                    .anyMatch(error -> error.message().contains("Unexpected error while crawling https://broken.com") || error.message().contains("Mocked page not available: https://broken.com"));
+            assertTrue(foundBrokenLinkError);
+
         }
     }
 
